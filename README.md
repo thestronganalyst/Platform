@@ -6,7 +6,7 @@ The modules are extracted from two real apps — AveHealth (an RPM provider/pati
 
 ## Status
 
-Extraction step 1 is built: `infra-aws` and `ci-cd` are `incubating` and `examples/shell` generates and synthesizes. Every other module carries its contract (`module.yaml`, `CLAUDE.md`, `ADR.md`) and is `status: planned`; `platform new` refuses any manifest that selects one, and that refusal list is the extraction to-do list.
+Extraction step 1 is done: `infra-aws` and `ci-cd` are `incubating`, and `examples/shell` is deployed to the platform's own AWS account, with `/healthz` answering through the API. Every other module carries its contract (`module.yaml`, `CLAUDE.md`, `ADR.md`) and is `status: planned`; `platform new` refuses any manifest that selects one, and that refusal list is the extraction to-do list.
 
 ## Layout
 

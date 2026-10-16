@@ -1,0 +1,52 @@
+app: shell
+hosting: aws
+layout: flat
+generated_from:
+  repo: /home/claude/platform
+  preset_chain:
+  - aws-foundation
+build_order:
+- infra-aws
+- ci-cd
+modules:
+  infra-aws:
+    version: 0.3.0
+    drift: platform-owned
+    provides:
+    - infra.network@1
+    - infra.db.postgres@1
+    - infra.container@1
+    - infra.cdn@1
+    - infra.object-store@1
+    - infra.secrets@1
+    - infra.security-baseline@1
+    requires: []
+    optional: []
+  ci-cd:
+    version: 0.3.0
+    drift: platform-owned
+    provides:
+    - ci.pipeline@1
+    requires: []
+    optional:
+    - infra.container@1
+    - infra.static-host@1
+    - infra.cdn@1
+config:
+  infra-aws:
+    region: us-east-1
+    account: ''
+    db_size: small
+    runtime: lambda
+    nat_gateways: 1
+    guardduty: true
+    cloudtrail: true
+    bastion: true
+    deletion_protection: false
+  ci-cd:
+    branch: main
+    github_repo: ''
+    oidc_provider: create
+environments:
+- prod
+target: /home/claude/shell

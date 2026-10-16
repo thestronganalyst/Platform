@@ -1,0 +1,9 @@
+# The empty shell: extraction step 1's proof that the AWS foundation deploys.
+# Throwaway by design (deletion_protection false), so `cdk destroy --all` tears it down.
+app: shell
+preset: aws-foundation
+hosting: aws
+config:
+  infra-aws.deletion_protection: false
+  infra-aws.db_size: small            # pauses to 0 ACU when idle
+environments: [prod]

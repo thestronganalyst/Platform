@@ -1,5 +1,5 @@
 <!-- Exported from the living doc: https://claude.ai/code/artifact/3cd34991-50e7-4d5a-a1e0-ae6ebf1aee2b
-     The doc is the editing surface; re-export here when it changes. Last export: 2026-10-16 (doc rev 32). -->
+     The doc is the editing surface; re-export here when it changes. Last export: 2026-10-16 (doc rev 34). -->
 
 # Platform Module Contract & Module List
 
@@ -152,7 +152,7 @@ Validation runs before generation: every `requires` of every selected module mus
 
 Extract in dependency order, prove each step by deploying, and stop early. The point of stopping is to get softball generated from the preset as soon as the foundation holds; everything after that incubates inside softball.
 
-1. `infra-aws` + `ci-cd` — prove it by deploying an empty shell to your AWS account from a fresh clone. Built 2026-10-16 as examples/shell (five stacks, 19 contract tests); the deploy waits on AWS access.
+1. `infra-aws` + `ci-cd` — prove it by deploying an empty shell to your AWS account from a fresh clone. Deployed 2026-10-16 as examples/shell to a dedicated platform account: five stacks up, /healthz answers 200, database private and encrypted.
 2. `identity`, then `profiles` (redesigned for managed profiles), then `tenancy` (designed against softball's league → team → player shape). Back-port all three into AveHealth before moving on; if AveHealth breaks, the boundaries are wrong. Each back-port changes sign-in or who sees what, so it needs your explicit yes first.
 3. `consent-sharing`, `notifications`, `storage`.
 4. `api-shell`, `web-shell`, `observability`.
@@ -186,7 +186,7 @@ v1 is done when `platform new examples/softball/platform.yaml` on a fresh machin
 
 Time-box: two weekends for extraction steps 1 and 2. If step 2 isn't back-ported into AveHealth by then, stop, write down which boundary fought you, and redraw it before touching step 3. Missing the time-box is information, not failure; ignoring it is how these repos end up as a third thing to maintain instead of a tool that removes work.
 
-- [ ] Step 1 deployed from a fresh clone
+- [x] Step 1 deployed from a fresh clone
 - [ ] Step 2 back-ported into AveHealth without breaking it
 - [ ] Steps 3–4 extracted
 - [ ] `aws-app` and `team-app` presets written

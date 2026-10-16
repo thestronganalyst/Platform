@@ -28,3 +28,6 @@ The owner answered four questions on 2026-10-16:
 ## Alternatives rejected
 - Separate dev and prod: owner's call.
 - Free tier for single-user tools only: would push every multi-role app onto the AWS fixed costs (NAT gateway, Aurora's capacity floor).
+
+## Amendment (2026-10-16): a dedicated member account
+The owner's existing personal account still runs the earlier AveHealth stack (database, user pool, uploads with health data). Rather than share it, the platform deploys to a **separate member account named `platform`** under an AWS Organization whose management account is that personal account. Experiments never share an account, or its admin rights, with patient data, and retiring the old AveHealth resources later does not touch the platform. The deploy runs through the member account's `OrganizationAccountAccessRole`, assumed from a browser sign-in (`aws login --remote`), with no stored keys. Account numbers stay out of this repo.
