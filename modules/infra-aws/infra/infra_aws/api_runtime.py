@@ -18,7 +18,7 @@ PLACEHOLDER = Path(__file__).with_name("placeholder_handler.py")
 
 
 class ApiRuntime:
-    """`infra.container@1`: `.http_api`, `.url`, `.mount(...)`.
+    """`infra.container@1`: `.http_api`, `.url`, `.mount(...)`, `.on_mount(hook)`.
 
     `mount(id, image=...)` runs a Lambda container image (api-shell's) behind the API's
     default route. If no module mounts one, a placeholder answers `/healthz` so the shell
@@ -28,6 +28,7 @@ class ApiRuntime:
     def __init__(self, stack: cdk.Stack, ctx, cfg: InfraConfig, network: Network, db: Database, web_origin: str):
         self._stack, self._ctx, self._network, self._db = stack, ctx, network, db
         self.function: lambda_.Function | None = None
+        self._on_mount: list = []
         self.http_api = apigwv2.HttpApi(
             stack, "HttpApi",
             api_name=ctx.resource_name("api"),
@@ -101,7 +102,16 @@ class ApiRuntime:
             integration=integrations.HttpLambdaIntegration(f"{construct_id}Integration", fn),
         )
         self.function = fn
+        for hook in self._on_mount:
+            hook(fn)
         return fn
+
+    def on_mount(self, hook) -> None:
+        """Run `hook(fn)` on the API function once it exists: other components add environment and grants this way."""
+        if self.function is not None:
+            hook(self.function)
+        else:
+            self._on_mount.append(hook)
 
     def ensure_mounted(self) -> None:
         if self.function is None:

@@ -39,6 +39,6 @@ jobs:
         with:
           node-version: 22
       - name: Install
-        run: pip install -e ".[dev]" -r templates/app/infra/requirements.txt
+        run: pip install -e ".[dev]" -r templates/app/infra/requirements.txt "fastapi>=0.115,<1" "pyjwt[crypto]>=2.8,<3" httpx boto3
       - name: Module infrastructure contract tests (synthesizes generated apps; no AWS access)
         run: pytest modules/*/tests

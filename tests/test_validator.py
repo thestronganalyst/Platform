@@ -302,13 +302,15 @@ def test_shell_generates_flat_by_default_with_a_private_record(tmp_path: Path):
     report = run_new(REPO / "examples/shell/platform.yaml", REPO, target, force=False, record_dir=record)
     assert report.ok, report.render()
     lock = yaml.safe_load((record / "platform.lock.yaml").read_text())
-    assert lock["app"] == "shell" and lock["layout"] == "flat" and lock["build_order"] == ["infra-aws", "ci-cd"]
+    assert lock["app"] == "shell" and lock["layout"] == "flat" and lock["build_order"] == ["infra-aws", "ci-cd", "identity"]
     assert (record / "platform.yaml").exists()
     settings = json.loads((target / "infra/settings.json").read_text())
-    assert [c["name"] for c in settings["components"]] == ["infra-aws", "ci-cd"]
+    assert [c["name"] for c in settings["components"]] == ["infra-aws", "ci-cd", "identity"]
     assert settings["components"][0]["package"] == "infra_aws"
     for f in ("infra/app.py", "infra/compose.py", "infra/cdk.json", "infra/requirements.txt",
-              "infra/infra_aws/__init__.py", "infra/ci_cd/__init__.py", "ci/publish-web.yml"):
+              "infra/infra_aws/__init__.py", "infra/ci_cd/__init__.py", "ci/publish-web.yml",
+              "infra/identity/__init__.py", "api/identity/auth.py", "api/identity/invites.py",
+              "migrations/identity/0001_users.sql"):
         assert (target / f).exists(), f
     assert not (target / "modules").exists()
 
@@ -338,7 +340,7 @@ def test_shippable_module_code_has_no_platform_vocabulary():
     for mod in sorted((REPO / "modules").iterdir()):
         for sub in ("app", "migrations"):
             for f in (mod / sub).rglob("*") if (mod / sub).exists() else []:
-                if f.is_file() and f.name != ".gitkeep":
+                if f.is_file() and f.name != ".gitkeep" and "__pycache__" not in f.parts:
                     text = f.read_text(encoding="utf-8", errors="ignore")
                     rel = f.relative_to(REPO).as_posix()
                     assert not PLATFORM_WORDS.search(text), (rel, PLATFORM_WORDS.search(text).group(0))

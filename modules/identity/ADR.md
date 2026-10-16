@@ -2,6 +2,12 @@
 
 Decisions and the alternatives rejected, newest first. Replaces "best X" branches: an experiment ends here as a dated entry, not as a branch.
 
+## 0004 · Implemented on the aws tier (2026-10-16)
+- Status: accepted
+- Context: Extraction step 2 starts with sign-in; `profiles` waits on the kid sign-in decision, `identity` does not.
+- Decision: Cognito pool, SRP-only public client, one group per role; API code verifies access tokens (not ID tokens) and guards routes by role; invites go through AdminCreateUser so the person gets a temporary password. Unbuilt options (passkey, social providers, free tier) fail at synth instead of half-working. `infra.container@1` became optional so the API function receives the pool settings and exactly four admin actions. Version 0.3.0.
+- Alternatives rejected: verifying ID tokens (they carry profile data and are meant for the client, not the API); a client secret (public web and mobile clients cannot keep one); the Amplify backend tooling (another deploy system beside CDK).
+
 ## 0003 · Invite-only by default (2026-10-16)
 - Status: accepted
 - Context: AveHealth is invite-only: nobody signs themselves up or picks their own role. Softball's shape is the same (league director → coach → parent → kid).

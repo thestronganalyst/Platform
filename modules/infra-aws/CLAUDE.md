@@ -9,7 +9,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 ## Provides (and what a consumer gets from `ctx.require(...)`)
 - `infra.network@1` — `.vpc`, `.app_subnets`, `.data_subnets`, `.app_security_group`
 - `infra.db.postgres@1` — `.cluster`, `.secret`, `.key`, `.endpoint`, `.port`, `.database_name`, `.allow_from(peer_sg, description)`
-- `infra.container@1` — `.http_api`, `.url`, `.mount(id, image=DockerImageCode, environment=..., memory_size=..., timeout=...)`; one function per app on the API's default route
+- `infra.container@1` — `.http_api`, `.url`, `.mount(id, image=DockerImageCode, environment=..., memory_size=..., timeout=...)`; one function per app on the API's default route; `.on_mount(hook)` runs `hook(fn)` once the function exists, so other components can add environment variables and grants without importing this package
 - `infra.cdn@1` — `.bucket`, `.distribution`, `.domain`, `.origin` (`https://<domain>`)
 - `infra.object-store@1` — `.bucket` (KMS-encrypted with the app key; CORS allows presigned PUT/GET from the web origin)
 - `infra.secrets@1` — `.key`, `.create(scope, id, description)` → a Secrets Manager secret under the app key
