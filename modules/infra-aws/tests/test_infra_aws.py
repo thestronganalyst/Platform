@@ -26,7 +26,7 @@ def generate(tmp: Path, config: dict, name: str = "shell") -> Path:
     mpath = tmp / f"{name}.platform.yaml"
     mpath.write_text(yaml.safe_dump(manifest), encoding="utf-8")
     target = tmp / name
-    report = run_new(mpath, REPO, target, force=True)
+    report = run_new(mpath, REPO, target, force=True, record_dir=tmp / f"{name}.record")
     assert report.ok, report.render()
     return target
 
@@ -210,7 +210,7 @@ def test_compose_refuses_undeclared_interfaces(tmp_path):
     env = compose.Environment(app=cdk.App(outdir=str(tmp_path / "o")), app_name="strict", name="prod",
                               account=ACCOUNT, region="us-east-1")
     ctx = compose.BuildContext(env=env, module="m", config={}, provides=["a.b@1"], requires=[], optional_ifaces=[])
-    with pytest.raises(compose.CompositionError, match="does not declare"):
+    with pytest.raises(compose.CompositionError, match="do not declare"):
         ctx.provide("x.y@1", object())
     with pytest.raises(compose.CompositionError, match="without declaring"):
         ctx.require("a.b@1")

@@ -22,6 +22,7 @@ This is the platform repo: modules, presets, schemas and the `platform` CLI. App
 - Prefer providing an existing interface over inventing one. New interfaces go in the catalog comment at the top of each `CLAUDE.md` that mentions them, and in `docs/CONTRACT.md`.
 - Do not add a module nobody has asked for. The module list exists because two apps needed each entry.
 - Infrastructure code lives in `infra/<name_with_underscores>/__init__.py` and exposes `build(ctx)`. A generated app's `infra/compose.py` (from `templates/app/infra/`) calls each selected module's `build` in dependency order. Inside it: `ctx.stack("Part")` for a tagged stack named `<App><Env><Part>`, `ctx.provide(iface, value)` for every interface in `provides` (the synth fails if one is missing), `ctx.require(iface)` / `ctx.optional(iface)` for what it consumes, `ctx.finally_(fn)` to fill a gap after every module has built. The CLAUDE.md lists exactly what each provided value exposes.
+- Code under a module's `app/` and `migrations/` ships inside apps and can reach a client's copy (AveHealth's company repository). Keep it plain: ordinary imports, no contract strings (`identity.session@1`), no platform words (platform, preset, manifest), no module names. `tests/test_validator.py` fails otherwise. Contract strings belong in `module.yaml` and `infra/` build code only.
 - Infra tests synthesize a generated app (`platform new` into a temp folder) and assert on the templates; see `modules/infra-aws/tests/`. They need `pip install -r templates/app/infra/requirements.txt` and node.
 
 ## Extraction (from AveHealth, in this order)
@@ -41,7 +42,7 @@ When you implement a module, change `status` from `planned` to `incubating`, put
 - No "best X" branches. An experiment ends as a dated entry in an `ADR.md` with the alternatives rejected.
 - No multi-cloud. Cloud-specific code stays inside modules; a second cloud is a new module later, not a refactor now.
 - No picker UI before the modules are proven. The manifest is the picker.
-- Never hand-edit a generated app's `platform.lock.yaml` or its copied `module.yaml` files; change the manifest or the platform and regenerate.
+- Generated apps are flat by default and carry no platform files (docs/adr/0004-flat-apps.md); their record lives in `apps/<app>/` here. Never hand-edit a record's `platform.lock.yaml`; change the manifest or the platform and regenerate. `--layout modular` is for platform work only, never for an app someone else will see.
 
 ## Decisions
 Decided 2026-10-16 (each in the owning module's `ADR.md`; the baseline in `docs/adr/0002-hosting-baseline.md`): own AWS account, us-east-1, one environment · free tier hosts multi-role apps · identity abstracts Cognito and Supabase Auth, invite-only by default · kids get guardian-issued restricted logins · tenancy levels fixed per app · FastAPI on Lambda behind API Gateway · Aurora Serverless v2 · bare React Native.

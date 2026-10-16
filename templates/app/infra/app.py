@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""CDK entry point for a generated app. Deploy from this folder:
+"""CDK entry point. Deploy from this folder:
 
     pip install -r requirements.txt
     cdk bootstrap            # once per account and region
     cdk deploy --all
 
 The account comes from your credentials (the CDK CLI sets CDK_DEFAULT_ACCOUNT).
-If the manifest pins `infra-aws.account`, any other account is refused.
+If settings.json pins an account, any other account is refused.
 """
 import os
 from pathlib import Path

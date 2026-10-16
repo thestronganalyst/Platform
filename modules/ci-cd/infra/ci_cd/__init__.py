@@ -27,7 +27,7 @@ def build(ctx) -> None:
     repo = (ctx.config.get("github_repo") or "").strip()
     branch = ctx.config.get("branch") or "main"
     if not repo:
-        print(f"ci-cd: no ci-cd.github_repo for {ctx.app_name}/{ctx.environment}; no deploy role created", file=sys.stderr)
+        print(f"{ctx.app_name}/{ctx.environment}: no GitHub repository configured; no deploy role created", file=sys.stderr)
         ctx.provide("ci.pipeline@1", CiPipeline(role=None, repo="", branch=branch))
         return
 

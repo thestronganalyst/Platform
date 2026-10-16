@@ -19,6 +19,7 @@ modules/<name>/          ← one folder per module
   infra/  app/  migrations/  tests/
 presets/<name>.yaml      ← named module compositions: aws-foundation, aws-app, free-app, rpm-app, team-app
 schemas/                 ← JSON Schemas for module.yaml, presets and the manifest
+apps/<app>/              ← private record of each generated app (manifest + lock)
 examples/<app>/          ← example manifests: shell (aws-foundation), avehealth (rpm-app), softball (team-app), league-lite and tracker (free-app)
 templates/app/infra/     ← the CDK composer copied into every generated aws-tier app
 templates/module/        ← copy this to start a new module
@@ -49,6 +50,8 @@ pip install -r requirements.txt && npm install -g aws-cdk
 cdk bootstrap                                         # once per account and region
 cdk deploy --all
 ```
+
+Apps are **flat** by default: ordinary folders (`api/`, `web/`, `mobile/`, `migrations/`, `infra/`, `ci/`) and no platform files, so they read like any hand-built app. The record of what was generated goes to `apps/<app>/` in this repo (`--record-dir` to change it). `--layout modular` keeps the module layout for platform work. See docs/adr/0004-flat-apps.md.
 
 `examples/shell` is the empty shell from extraction step 1: the AWS foundation with a placeholder API that answers `/healthz`. It is throwaway (`deletion_protection: false`), so `cdk destroy --all` removes it.
 

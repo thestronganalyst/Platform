@@ -387,7 +387,46 @@ def build_order(res: Resolution, catalog: Catalog) -> list[str]:
     return order
 
 
-def run_new(manifest_path: Path, repo: Path, target: Path, *, force: bool) -> Report:
+IGNORE = shutil.ignore_patterns("__pycache__", "cdk.out", ".gitkeep")
+APP_PLATFORMS = ("api", "web", "mobile")
+
+
+def _package(name: str) -> str:
+    return name.replace("-", "_")
+
+
+def _copy_flat(repo: Path, name: str, target: Path, hosting: str) -> None:
+    """Module code into ordinary folders: api/<pkg>/, web/<pkg>/, mobile/<pkg>/, migrations/<pkg>/, infra/<pkg>/, ci/."""
+    src, pkg = repo / "modules" / name, _package(name)
+    app_dir = src / "app"
+    if app_dir.exists():
+        for sub in sorted(p for p in app_dir.iterdir() if p.is_dir()):
+            dst = target / sub.name / pkg if sub.name in APP_PLATFORMS else target / sub.name
+            shutil.copytree(sub, dst, dirs_exist_ok=True, ignore=IGNORE)
+    if (src / "migrations").exists() and any(p.name != ".gitkeep" for p in (src / "migrations").iterdir()):
+        shutil.copytree(src / "migrations", target / "migrations" / pkg, dirs_exist_ok=True, ignore=IGNORE)
+    if hosting == "aws" and (src / "infra" / pkg).exists():  # AWS code only where it can run
+        shutil.copytree(src / "infra" / pkg, target / "infra" / pkg, dirs_exist_ok=True, ignore=IGNORE)
+
+
+def _copy_modular(repo: Path, name: str, target: Path, hosting: str) -> None:
+    src, dst = repo / "modules" / name, target / "modules" / name
+    for sub in ("app", "infra", "migrations"):
+        if (src / sub).exists():
+            shutil.copytree(src / sub, dst / sub, dirs_exist_ok=True, ignore=IGNORE)
+    shutil.copy2(src / "module.yaml", dst / "module.yaml")
+
+
+def run_new(manifest_path: Path, repo: Path, target: Path, *, force: bool, layout: str = "flat",
+            record_dir: Path | None = None) -> Report:
+    """Generate an app.
+
+    flat (default): an ordinary-looking app. No manifest, lock, module.yaml or contracts inside it;
+    the record of what was generated goes to `record_dir` (default: <repo>/apps/<app>/), which stays private.
+    modular: the module layout with manifest, lock and contracts inside the app, for working on the platform.
+    """
+    if layout not in ("flat", "modular"):
+        raise ValueError(f"layout must be flat or modular, got {layout!r}")
     report, res = run_validate(manifest_path, repo, strict=True)
     if not report.ok or res is None:
         report.error("refusing to generate: fix the errors above (planned modules have no implementation to copy)")
@@ -402,38 +441,58 @@ def run_new(manifest_path: Path, repo: Path, target: Path, *, force: bool) -> Re
     except ValueError as exc:
         report.error(str(exc))
         return report
+    config = effective_config(res, catalog)
     target.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(manifest_path, target / "platform.yaml")
+
+    for name in order:
+        (_copy_flat if layout == "flat" else _copy_modular)(repo, name, target, res.hosting)
+
+    if res.hosting == "aws":
+        shutil.copytree(repo / "templates" / "app" / "infra", target / "infra", dirs_exist_ok=True, ignore=IGNORE)
+        package_path = (lambda n: _package(n)) if layout == "flat" else (
+            lambda n: f"../modules/{n}/infra/{_package(n)}")
+        settings = {
+            "app": res.app,
+            "environments": res.environments,
+            "components": [{"name": n, "package": package_path(n),
+                            "provides": catalog.modules[n].get("provides", []),
+                            "requires": catalog.modules[n].get("requires", []),
+                            "optional": catalog.modules[n].get("optional", []),
+                            "config": config.get(n, {})} for n in order],
+        }
+        (target / "infra" / "settings.json").write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
+
     lock = {
         "app": res.app,
         "hosting": res.hosting,
+        "layout": layout,
         "generated_from": {"repo": str(repo), "preset_chain": res.preset_chain},
         "build_order": order,
         "modules": {n: {"version": catalog.modules[n]["version"], "drift": catalog.modules[n]["drift"],
                         "provides": catalog.modules[n].get("provides", []),
                         "requires": catalog.modules[n].get("requires", []),
                         "optional": catalog.modules[n].get("optional", [])} for n in order},
-        "config": effective_config(res, catalog),
+        "config": config,
         "environments": res.environments,
     }
-    if res.hosting == "aws":
-        shutil.copytree(repo / "templates" / "app" / "infra", target / "infra", dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("__pycache__", "cdk.out"))
-    (target / "platform.lock.yaml").write_text(yaml.safe_dump(lock, sort_keys=False), encoding="utf-8")
 
-    agent_doc = [f"# {res.app}\n", "Generated by `platform new`. Each section below is a module's own contract; "
-                 "the manifest is `platform.yaml`, the resolved set is `platform.lock.yaml`.\n"]
-    for name in res.modules:
-        src = repo / "modules" / name
-        dst = target / "modules" / name
-        for sub in ("app", "infra", "migrations"):
-            if (src / sub).exists():
-                shutil.copytree(src / sub, dst / sub, dirs_exist_ok=True,
-                                ignore=shutil.ignore_patterns("__pycache__", "cdk.out", ".gitkeep"))
-        shutil.copy2(src / "module.yaml", dst / "module.yaml")
-        agent_doc.append("\n---\n\n" + (src / "CLAUDE.md").read_text(encoding="utf-8"))
-    (target / "CLAUDE.md").write_text("\n".join(agent_doc), encoding="utf-8")
-    report.note(f"generated {res.app} into {target} with {len(res.modules)} modules")
+    if layout == "modular":
+        shutil.copy2(manifest_path, target / "platform.yaml")
+        (target / "platform.lock.yaml").write_text(yaml.safe_dump(lock, sort_keys=False), encoding="utf-8")
+        agent_doc = [f"# {res.app}\n", "Generated by `platform new --layout modular`. Each section below is a module's "
+                     "own contract; the manifest is `platform.yaml`, the resolved set is `platform.lock.yaml`.\n"]
+        for name in order:
+            agent_doc.append("\n---\n\n" + (repo / "modules" / name / "CLAUDE.md").read_text(encoding="utf-8"))
+        (target / "CLAUDE.md").write_text("\n".join(agent_doc), encoding="utf-8")
+    else:
+        record = record_dir or (repo / "apps" / res.app)
+        record.mkdir(parents=True, exist_ok=True)
+        lock["target"] = str(target.resolve())
+        shutil.copy2(manifest_path, record / "platform.yaml")
+        (record / "platform.lock.yaml").write_text(yaml.safe_dump(lock, sort_keys=False), encoding="utf-8")
+        report.note(f"record of what was generated: {record}")
+
+    report.note(f"generated {res.app} into {target} ({layout} layout, {len(order)} modules)")
     return report
 
 
@@ -475,6 +534,10 @@ def build_parser() -> argparse.ArgumentParser:
     n.add_argument("manifest", type=Path)
     n.add_argument("target", type=Path)
     n.add_argument("--force", action="store_true")
+    n.add_argument("--layout", choices=["flat", "modular"], default="flat",
+                   help="flat (default): an ordinary app with no platform files; modular: module layout for platform work")
+    n.add_argument("--record-dir", type=Path, default=None,
+                   help="where the private record of a flat app goes (default: <platform repo>/apps/<app>/)")
 
     ls = sub.add_parser("list", help="list modules, presets or interfaces")
     ls.add_argument("what", choices=["modules", "presets", "interfaces"])
@@ -515,7 +578,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if report.ok else 1
 
     if args.cmd == "new":
-        report = run_new(args.manifest, repo, args.target, force=args.force)
+        report = run_new(args.manifest, repo, args.target, force=args.force, layout=args.layout,
+                         record_dir=args.record_dir)
         print(report.render())
         return 0 if report.ok else 1
 

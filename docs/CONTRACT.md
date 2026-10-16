@@ -1,5 +1,5 @@
 <!-- Exported from the living doc: https://claude.ai/code/artifact/3cd34991-50e7-4d5a-a1e0-ae6ebf1aee2b
-     The doc is the editing surface; re-export here when it changes. Last export: 2026-10-16 (doc rev 31). -->
+     The doc is the editing surface; re-export here when it changes. Last export: 2026-10-16 (doc rev 32). -->
 
 # Platform Module Contract & Module List
 
@@ -146,7 +146,7 @@ config:
 environments: [prod]
 ```
 
-Validation runs before generation: every `requires` of every selected module must be provided by another selected module, every `config` key must exist in some module's schema, and every selected module must support the chosen `hosting` tier. Any failure names the module and the missing interface.
+Validation runs before generation: every `requires` of every selected module must be provided by another selected module, every `config` key must exist in some module's schema, and every selected module must support the chosen `hosting` tier. Any failure names the module and the missing interface. Generated apps are flat: ordinary folders with no manifest, lock or module files inside, so an app never reveals the platform; the manifest and lock are kept privately in the platform repo under apps/<app>/ (ADR 0004).
 
 ## Extraction order from AveHealth
 

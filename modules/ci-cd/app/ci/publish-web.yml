@@ -1,4 +1,4 @@
-# Copy to .github/workflows/ in the app's repository once web-shell builds a site.
+# Copy to .github/workflows/ in the app's repository once the web app builds a site.
 # Repository variables (from the stack outputs): AWS_DEPLOY_ROLE_ARN, WEB_BUCKET, WEB_DISTRIBUTION_ID.
 # Upload order never serves a blank page: hashed assets first, index.html last, then invalidate it.
 name: publish-web

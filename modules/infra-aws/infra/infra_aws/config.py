@@ -1,4 +1,4 @@
-"""infra-aws configuration, read from the app's effective config (platform.lock.yaml)."""
+"""infra-aws configuration, read from the app's settings."""
 from __future__ import annotations
 
 from dataclasses import dataclass

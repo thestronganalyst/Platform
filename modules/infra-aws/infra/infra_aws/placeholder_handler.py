@@ -9,5 +9,5 @@ def handler(event, context):
         body = {"status": "ok", "app": os.environ.get("APP"), "environment": os.environ.get("ENVIRONMENT"),
                 "placeholder": True}
         return {"statusCode": 200, "headers": headers, "body": json.dumps(body)}
-    body = {"error": "not_found", "detail": "No API is mounted yet; this is the platform placeholder."}
+    body = {"error": "not_found", "detail": "No API is mounted yet; this is a placeholder."}
     return {"statusCode": 404, "headers": headers, "body": json.dumps(body)}

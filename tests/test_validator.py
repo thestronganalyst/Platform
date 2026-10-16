@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import copy
+import json
+import re
 from pathlib import Path
 
 import pytest
@@ -282,7 +284,7 @@ def test_new_generates_once_modules_are_not_planned(tmp_path: Path, monkeypatch)
         (repo_copy / "modules" / name / "app" / "hello.txt").write_text(f"hello from {name}\n")
 
     target = tmp_path / "tracker"
-    report = run_new(repo_copy / "examples/tracker/platform.yaml", repo_copy, target, force=False)
+    report = run_new(repo_copy / "examples/tracker/platform.yaml", repo_copy, target, force=False, layout="modular")
     assert report.ok, report.render()
     assert (target / "platform.yaml").exists()
     lock = yaml.safe_load((target / "platform.lock.yaml").read_text())
@@ -295,18 +297,54 @@ def test_new_generates_once_modules_are_not_planned(tmp_path: Path, monkeypatch)
 # ---------------------------------------------------------------- step 1: the shell generates
 
 
-def test_shell_generates_with_the_composer_and_a_build_order(tmp_path: Path):
-    target = tmp_path / "shell"
-    report = run_new(REPO / "examples/shell/platform.yaml", REPO, target, force=False)
+def test_shell_generates_flat_by_default_with_a_private_record(tmp_path: Path):
+    target, record = tmp_path / "shell", tmp_path / "record"
+    report = run_new(REPO / "examples/shell/platform.yaml", REPO, target, force=False, record_dir=record)
     assert report.ok, report.render()
-    lock = yaml.safe_load((target / "platform.lock.yaml").read_text())
-    assert lock["app"] == "shell" and lock["hosting"] == "aws"
-    assert lock["build_order"] == ["infra-aws", "ci-cd"]
-    assert lock["modules"]["ci-cd"]["optional"] == ["infra.container@1", "infra.static-host@1", "infra.cdn@1"]
+    lock = yaml.safe_load((record / "platform.lock.yaml").read_text())
+    assert lock["app"] == "shell" and lock["layout"] == "flat" and lock["build_order"] == ["infra-aws", "ci-cd"]
+    assert (record / "platform.yaml").exists()
+    settings = json.loads((target / "infra/settings.json").read_text())
+    assert [c["name"] for c in settings["components"]] == ["infra-aws", "ci-cd"]
+    assert settings["components"][0]["package"] == "infra_aws"
     for f in ("infra/app.py", "infra/compose.py", "infra/cdk.json", "infra/requirements.txt",
-              "modules/infra-aws/infra/infra_aws/__init__.py", "modules/ci-cd/infra/ci_cd/__init__.py"):
+              "infra/infra_aws/__init__.py", "infra/ci_cd/__init__.py", "ci/publish-web.yml"):
         assert (target / f).exists(), f
-    assert not list(target.rglob(".gitkeep"))
+    assert not (target / "modules").exists()
+
+
+PLATFORM_FILES = {"platform.yaml", "platform.lock.yaml", "module.yaml", "CLAUDE.md", "ADR.md"}
+PLATFORM_WORDS = re.compile(r"platform|preset|manifest|module\.yaml|managed-by|lock\.yaml", re.IGNORECASE)
+CONTRACT_STRING = re.compile(r"\b[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+@\d+\b")
+
+
+def test_flat_app_looks_like_an_ordinary_app(tmp_path: Path):
+    """A flat app carries no platform files or vocabulary; contract strings appear only in its infra wiring."""
+    target = tmp_path / "shell"
+    assert run_new(REPO / "examples/shell/platform.yaml", REPO, target, force=False, record_dir=tmp_path / "rec").ok
+    for f in target.rglob("*"):
+        if not f.is_file():
+            continue
+        rel = f.relative_to(target).as_posix()
+        assert f.name not in PLATFORM_FILES, rel
+        text = f.read_text(encoding="utf-8", errors="ignore")
+        assert not PLATFORM_WORDS.search(text), (rel, PLATFORM_WORDS.search(text).group(0))
+        if not rel.startswith("infra/"):
+            assert not CONTRACT_STRING.search(text), (rel, CONTRACT_STRING.search(text).group(0))
+
+
+def test_shippable_module_code_has_no_platform_vocabulary():
+    """app/ and migrations/ ship inside apps (and may reach a client's copy): plain code, no contracts, no platform words."""
+    for mod in sorted((REPO / "modules").iterdir()):
+        for sub in ("app", "migrations"):
+            for f in (mod / sub).rglob("*") if (mod / sub).exists() else []:
+                if f.is_file() and f.name != ".gitkeep":
+                    text = f.read_text(encoding="utf-8", errors="ignore")
+                    rel = f.relative_to(REPO).as_posix()
+                    assert not PLATFORM_WORDS.search(text), (rel, PLATFORM_WORDS.search(text).group(0))
+                    assert not CONTRACT_STRING.search(text), (rel, CONTRACT_STRING.search(text).group(0))
+                    names = {m.name for m in (REPO / "modules").iterdir()}
+                    assert not any(re.search(rf"\b{re.escape(n)}\b", text) for n in names if "-" in n), rel
 
 
 def test_build_order_puts_providers_before_consumers():
