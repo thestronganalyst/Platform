@@ -8,6 +8,7 @@ generated_from:
 build_order:
 - infra-aws
 - ci-cd
+- identity
 modules:
   infra-aws:
     version: 0.3.0
@@ -32,6 +33,18 @@ modules:
     - infra.container@1
     - infra.static-host@1
     - infra.cdn@1
+  identity:
+    version: 0.3.0
+    drift: platform-owned
+    provides:
+    - identity.user@1
+    - identity.session@1
+    - identity.roles@1
+    requires:
+    - infra.db.postgres@1
+    optional:
+    - infra.secrets@1
+    - infra.container@1
 config:
   infra-aws:
     region: us-east-1
@@ -47,6 +60,15 @@ config:
     branch: main
     github_repo: ''
     oidc_provider: create
+  identity:
+    providers:
+    - email
+    mfa: optional
+    signup: invite-only
+    roles:
+    - admin
+    - member
+    deletion_protection: false
 environments:
 - prod
 target: /home/claude/shell

@@ -1,9 +1,13 @@
-# The empty shell: extraction step 1's proof that the AWS foundation deploys.
-# Throwaway by design (deletion_protection false), so `cdk destroy --all` tears it down.
+# The shell: the proof app that grows one extraction step at a time.
+# Step 1: the AWS foundation. Step 2: sign-in (identity).
+# Throwaway by design (deletion protection off), so `cdk destroy --all` tears it down.
 app: shell
 preset: aws-foundation
 hosting: aws
+modules:
+  add: [identity]
 config:
   infra-aws.deletion_protection: false
   infra-aws.db_size: small            # pauses to 0 ACU when idle
+  identity.deletion_protection: false
 environments: [prod]

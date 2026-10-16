@@ -82,7 +82,7 @@ Opt-in, generic, and the real payoff of the platform. The first four are the one
 
 | Module | Provides | Requires | Source | Drift | Status |
 | --- | --- | --- | --- | --- | --- |
-| `identity` | `identity.user`, `identity.session`, `identity.roles` (Cognito on `aws`, Supabase Auth on `free`) | `infra.*` | AveHealth | platform-owned | extract |
+| `identity` | `identity.user`, `identity.session`, `identity.roles` (Cognito on `aws`, Supabase Auth on `free`) | `infra.*` | AveHealth | platform-owned | incubating (aws tier, deployed in the shell) |
 | `profiles` | `profiles.person`, `profiles.guardian` (managed profiles: kids, dependents and caregivers' charges, who may get a guardian-issued read-only login) | `identity.user` | redesign for softball, back-port to AveHealth | platform-owned | redesign |
 | `tenancy` | `tenancy.org`, `tenancy.hierarchy` (league → team; practice → panel), `tenancy.membership`, `tenancy.scope` | `identity.user`, `profiles.person` | defined by softball | platform-owned | redesign |
 | `consent-sharing` | `consent.grant`, `consent.check`, `consent.revoke` (who may see what about whom, scoped, audited) | `profiles.*`, `tenancy.scope`, `obs.audit` | AveHealth | platform-owned | extract |
