@@ -1,0 +1,9 @@
+# Preset. Schema: ../schemas/preset.schema.json
+name: aws-foundation
+hosting: aws
+description: 'The AWS foundation alone: network, database, API runtime, web hosting, security baseline and
+  the GitHub deploy role. Extraction step 1 proves this deploys; every aws-tier preset builds on it.'
+modules:
+- infra-aws
+- ci-cd
+config: {}

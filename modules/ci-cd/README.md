@@ -1,9 +1,9 @@
 # ci-cd
 
-GitHub Actions workflows that build, test and deploy every environment; adapts to whichever infra interfaces are selected.
+GitHub Actions deploys through an OIDC role scoped to one repository and branch; workflow templates for publishing the web app.
 
 - Pick it when: you need `ci.pipeline@1`.
-- Status: `planned` — folder and contract exist, no implementation yet.
+- Status: `incubating` — implemented (OIDC deploy role + web publish template); used by no app yet.
 - Source: AveHealth.
 
 See `CLAUDE.md` for the contract and `ADR.md` for decisions.

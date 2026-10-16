@@ -6,7 +6,7 @@ The modules are extracted from two real apps — AveHealth (an RPM provider/pati
 
 ## Status
 
-Skeleton. Every module folder exists, carries its contract (`module.yaml`, `CLAUDE.md`, `ADR.md`), and is `status: planned` — no implementation yet. `platform validate` passes for all three example manifests; `platform new` refuses to generate until modules are implemented. That refusal list is the extraction to-do list.
+Extraction step 1 is built: `infra-aws` and `ci-cd` are `incubating` and `examples/shell` generates and synthesizes. Every other module carries its contract (`module.yaml`, `CLAUDE.md`, `ADR.md`) and is `status: planned`; `platform new` refuses any manifest that selects one, and that refusal list is the extraction to-do list.
 
 ## Layout
 
@@ -17,9 +17,10 @@ modules/<name>/          ← one folder per module
   CLAUDE.md              ← agent-facing contract: wiring, invariants, how to extend
   ADR.md                 ← decisions and rejected alternatives (replaces "best X" branches)
   infra/  app/  migrations/  tests/
-presets/<name>.yaml      ← named module compositions: aws-app, free-app, rpm-app, team-app
+presets/<name>.yaml      ← named module compositions: aws-foundation, aws-app, free-app, rpm-app, team-app
 schemas/                 ← JSON Schemas for module.yaml, presets and the manifest
-examples/<app>/          ← example manifests: avehealth (rpm-app), softball (team-app), tracker (free-app)
+examples/<app>/          ← example manifests: shell (aws-foundation), avehealth (rpm-app), softball (team-app), league-lite and tracker (free-app)
+templates/app/infra/     ← the CDK composer copied into every generated aws-tier app
 templates/module/        ← copy this to start a new module
 docs/CONTRACT.md         ← the module contract and the module list; source of truth
 docs/adr/                ← platform-level decisions
@@ -38,6 +39,18 @@ platform plan     examples/softball/platform.yaml   # resolved modules + effecti
 platform new      examples/softball/platform.yaml ../softball   # refuses while modules are planned
 pytest
 ```
+
+## Deploying an app (aws tier)
+
+```bash
+platform new examples/shell/platform.yaml ../shell    # any manifest whose modules are implemented
+cd ../shell/infra
+pip install -r requirements.txt && npm install -g aws-cdk
+cdk bootstrap                                         # once per account and region
+cdk deploy --all
+```
+
+`examples/shell` is the empty shell from extraction step 1: the AWS foundation with a placeholder API that answers `/healthz`. It is throwaway (`deletion_protection: false`), so `cdk destroy --all` removes it.
 
 ## The manifest
 

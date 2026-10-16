@@ -34,7 +34,7 @@ def test_every_module_declaration_is_valid():
     catalog, report = load_catalog()
     assert report.ok, report.render()
     assert len(catalog.modules) >= 19
-    assert set(catalog.presets) == {"aws-app", "free-app", "rpm-app", "team-app"}
+    assert set(catalog.presets) == {"aws-foundation", "aws-app", "free-app", "rpm-app", "team-app"}
 
 
 def test_every_module_folder_has_its_contract_files():
@@ -80,7 +80,7 @@ def test_softball_resolves_team_app_minus_content():
     manifest = yaml.safe_load((REPO / "examples/softball/platform.yaml").read_text())
     report, res = validate(manifest)
     assert report.ok, report.render()
-    assert res.preset_chain == ["aws-app", "team-app"]
+    assert res.preset_chain == ["aws-foundation", "aws-app", "team-app"]
     assert "content" not in res.modules and res.removed == ["content"]
     for expected in ("identity", "profiles", "tenancy", "booking", "payments", "offline-sync", "mobile-shell"):
         assert expected in res.modules
@@ -290,3 +290,50 @@ def test_new_generates_once_modules_are_not_planned(tmp_path: Path, monkeypatch)
     assert (target / "modules/identity/app/hello.txt").read_text().startswith("hello from identity")
     agent_doc = (target / "CLAUDE.md").read_text()
     assert "# identity" in agent_doc and "# notifications" in agent_doc
+
+
+# ---------------------------------------------------------------- step 1: the shell generates
+
+
+def test_shell_generates_with_the_composer_and_a_build_order(tmp_path: Path):
+    target = tmp_path / "shell"
+    report = run_new(REPO / "examples/shell/platform.yaml", REPO, target, force=False)
+    assert report.ok, report.render()
+    lock = yaml.safe_load((target / "platform.lock.yaml").read_text())
+    assert lock["app"] == "shell" and lock["hosting"] == "aws"
+    assert lock["build_order"] == ["infra-aws", "ci-cd"]
+    assert lock["modules"]["ci-cd"]["optional"] == ["infra.container@1", "infra.static-host@1", "infra.cdn@1"]
+    for f in ("infra/app.py", "infra/compose.py", "infra/cdk.json", "infra/requirements.txt",
+              "modules/infra-aws/infra/infra_aws/__init__.py", "modules/ci-cd/infra/ci_cd/__init__.py"):
+        assert (target / f).exists(), f
+    assert not list(target.rglob(".gitkeep"))
+
+
+def test_build_order_puts_providers_before_consumers():
+    from platform_cli.main import build_order
+    catalog, _ = load_catalog()
+    manifest = {"app": "x", "preset": "team-app", "hosting": "aws"}
+    report, res = validate(manifest)
+    order = build_order(res, catalog)
+    position = {n: i for i, n in enumerate(order)}
+    provider = {i: n for n in order for i in catalog.modules[n]["provides"]}
+    for n in order:
+        for iface in catalog.modules[n]["requires"] + catalog.modules[n].get("optional", []):
+            if iface in provider and provider[iface] != n:
+                assert position[provider[iface]] < position[n], (n, iface)
+    assert order.index("infra-aws") < order.index("ci-cd")
+
+
+def test_free_tier_app_gets_no_cdk_composer(tmp_path: Path):
+    import shutil
+    repo_copy = tmp_path / "repo"
+    shutil.copytree(REPO, repo_copy, ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache", "cdk.out"))
+    for name in ("infra-free", "web-shell", "identity", "profiles", "notifications"):
+        decl_path = repo_copy / "modules" / name / "module.yaml"
+        decl = yaml.safe_load(decl_path.read_text())
+        decl["status"] = "incubating"
+        decl_path.write_text(yaml.safe_dump(decl, sort_keys=False))
+    target = tmp_path / "tracker"
+    report = run_new(repo_copy / "examples/tracker/platform.yaml", repo_copy, target, force=False)
+    assert report.ok, report.render()
+    assert not (target / "infra").exists()

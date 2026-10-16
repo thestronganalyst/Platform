@@ -2,6 +2,13 @@
 
 Decisions and the alternatives rejected, newest first. Replaces "best X" branches: an experiment ends here as a dated entry, not as a branch.
 
+## 0005 · Implemented: five stacks composed through interfaces (2026-10-16)
+- Status: accepted
+- Context: Extraction step 1. The module had to deploy on its own (the `shell` example) and hand its resources to later modules without them importing this package.
+- Decision: `infra/infra_aws/build(ctx)` builds Security, Network, Web, Data and Api stacks and `ctx.provide`s seven interfaces. A placeholder Lambda answers `/healthz` until `api-shell` mounts the real image. `db_size: small` pauses Aurora to 0 ACU when idle. Written fresh, modeled on AveHealth's layout; nothing copied.
+- Alternatives rejected: one stack for everything (one failed resource rolls back the whole foundation); a zip-only API runtime (the contract is the container image; the zip is only the placeholder, so step 1 needs no Docker); `secret.grant_read` across stacks (writes the consumer into the key policy and cycles).
+- Consequences: `nat_gateways`, `guardduty`, `cloudtrail`, `bastion`, `deletion_protection` and `account` are now config. Version 0.3.0.
+
 ## 0004 · One account, one region, one environment (2026-10-16)
 - Status: accepted
 - Context: The owner deploys the platform to his own AWS account in us-east-1, with no separate dev and prod.

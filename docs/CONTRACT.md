@@ -1,5 +1,5 @@
 <!-- Exported from the living doc: https://claude.ai/code/artifact/3cd34991-50e7-4d5a-a1e0-ae6ebf1aee2b
-     The doc is the editing surface; re-export here when it changes. Last export: 2026-10-16 (doc rev 26). -->
+     The doc is the editing surface; re-export here when it changes. Last export: 2026-10-16 (doc rev 31). -->
 
 # Platform Module Contract & Module List
 
@@ -18,7 +18,7 @@ A module is one folder under `modules/<name>/` that can be added to or removed f
 | Item | What it holds | Why it exists |
 | --- | --- | --- |
 | `module.yaml` | Declaration: `name`, `version`, `layer`, `provides`, `requires`, `optional`, `config` schema with defaults, `hosting` tiers supported (`aws`, `free`), `platforms` it ships code into (`web`, `mobile`, `api`), `drift` policy, `status` | The scaffolder and the manifest validator read only this file |
-| `infra/` | CDK construct for the `aws` tier; Supabase config and SQL for the `free` tier | Infra travels with the capability, not in a separate repo |
+| `infra/` | CDK construct for the `aws` tier; on aws a package infra/<name>/ whose build(ctx) the generated app's composer calls in dependency order; Supabase config and SQL for the `free` tier | Infra travels with the capability, not in a separate repo |
 | `migrations/` | The database tables this module owns | A module owns its data; nothing else writes those tables |
 | `app/web`, `app/mobile`, `app/api` | Code templates per platform it supports | Only the platforms listed in `module.yaml` |
 | `CLAUDE.md` | Agent-facing contract: what it exposes, how to wire it to its `requires`, invariants not to break, how to extend it | This is what lets Claude Code compose and customize modules without you reading the code |
@@ -67,9 +67,9 @@ Every app gets these. The only choice is the hosting tier, which swaps `infra-aw
 
 | Module | Provides | Requires | Source app | Drift | Status |
 | --- | --- | --- | --- | --- | --- |
-| `infra-aws` | `infra.network`, `infra.db.postgres`, `infra.container`, `infra.cdn`, `infra.secrets`, infra.object-store, infra.security-baseline | none | AveHealth | platform-owned | extract first |
+| `infra-aws` | `infra.network`, `infra.db.postgres`, `infra.container`, `infra.cdn`, `infra.secrets`, infra.object-store, infra.security-baseline | none | AveHealth | platform-owned | incubating |
 | `infra-free` | `infra.db.postgres` (Supabase), `infra.static-host` (GitHub Pages), infra.functions (Supabase Edge Functions) | none | project-tracker | platform-owned | later |
-| `ci-cd` | `ci.pipeline` (build, test, deploy per environment) | `infra.*` | AveHealth + project-tracker | platform-owned | extract first |
+| `ci-cd` | `ci.pipeline` (build, test, deploy per environment) | `infra.*` | AveHealth + project-tracker | platform-owned | incubating |
 | `api-shell` | `api.router`, `api.auth-middleware`, `api.errors` | `infra.db.postgres`, `infra.container`; optional `identity.session` | AveHealth | platform-owned | extract |
 | `web-shell` | `web.shell`, `web.route-registry`, `web.role-nav`, `web.theme` | optional `identity.session` | AveHealth | forked | extract |
 | `observability` | `obs.logs`, `obs.errors`, `obs.audit` | `infra.*` | AveHealth | platform-owned | extract |
@@ -124,7 +124,7 @@ A preset is a named list of modules plus default config. Four cover everything y
 | `rpm-app` | `aws-app` | `mobile-shell`, `analytics-landing` | AveHealth-shaped apps |
 | `team-app` | `aws-app` | `mobile-shell`, `booking`, `payments`, `shared-lists`, `content`, `offline-sync` | Softball and any team or league app |
 
-Presets never contain domain modules. Generating `team-app` gives you login, leagues and teams, parents and managed kid profiles, notifications, field booking and payments wired and deployable, with no softball in it yet.
+Since step 1, aws-foundation (infra-aws + ci-cd) is a preset of its own and aws-app builds on it. Presets never contain domain modules. Generating `team-app` gives you login, leagues and teams, parents and managed kid profiles, notifications, field booking and payments wired and deployable, with no softball in it yet.
 
 ## Manifest
 
@@ -152,7 +152,7 @@ Validation runs before generation: every `requires` of every selected module mus
 
 Extract in dependency order, prove each step by deploying, and stop early. The point of stopping is to get softball generated from the preset as soon as the foundation holds; everything after that incubates inside softball.
 
-1. `infra-aws` + `ci-cd` — prove it by deploying an empty shell to your AWS account from a fresh clone.
+1. `infra-aws` + `ci-cd` — prove it by deploying an empty shell to your AWS account from a fresh clone. Built 2026-10-16 as examples/shell (five stacks, 19 contract tests); the deploy waits on AWS access.
 2. `identity`, then `profiles` (redesigned for managed profiles), then `tenancy` (designed against softball's league → team → player shape). Back-port all three into AveHealth before moving on; if AveHealth breaks, the boundaries are wrong. Each back-port changes sign-in or who sees what, so it needs your explicit yes first.
 3. `consent-sharing`, `notifications`, `storage`.
 4. `api-shell`, `web-shell`, `observability`.

@@ -1,9 +1,9 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: ci-cd
-version: 0.2.0
+version: 0.3.0
 layer: foundation
-status: planned
+status: incubating
 drift: platform-owned
 hosting:
 - aws
@@ -21,10 +21,17 @@ config:
     type: string
     default: main
     description: Branch that deploys to prod
-  preview_environments:
-    type: boolean
-    default: false
-    description: Deploy a preview per pull request
+  github_repo:
+    type: string
+    default: ''
+    description: 'owner/repo allowed to deploy through the OIDC role; empty creates no role'
+  oidc_provider:
+    type: string
+    default: create
+    enum:
+    - create
+    - import
+    description: 'Create the GitHub OIDC provider, or import it when the account already has one'
 source: AveHealth
-summary: GitHub Actions workflows that build, test and deploy every environment; adapts to whichever infra
-  interfaces are selected.
+summary: GitHub Actions deploys through an OIDC role scoped to one repository and branch; workflow templates
+  for publishing the web app.

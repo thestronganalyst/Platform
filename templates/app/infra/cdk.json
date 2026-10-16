@@ -1,0 +1,9 @@
+{
+  "app": "python3 app.py",
+  "watch": {
+    "exclude": [
+      "cdk.out",
+      "**/__pycache__"
+    ]
+  }
+}

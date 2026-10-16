@@ -1,9 +1,9 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: infra-aws
-version: 0.2.0
+version: 0.3.0
 layer: foundation
-status: planned
+status: incubating
 drift: platform-owned
 hosting:
 - aws
@@ -23,6 +23,10 @@ config:
     type: string
     default: us-east-1
     description: AWS region for every stack
+  account:
+    type: string
+    default: ''
+    description: 'If set (quote it: "123456789012"), refuse to build for any other account'
   db_size:
     type: string
     default: small
@@ -30,13 +34,33 @@ config:
     - small
     - medium
     - large
-    description: Aurora Serverless v2 capacity range (min/max ACU), mapped in the construct
+    description: 'Aurora Serverless v2 capacity: small 0-2 ACU and pauses when idle, medium 0.5-4, large 1-16'
   runtime:
     type: string
     default: lambda
     enum:
     - lambda
     description: 'API runtime: the API container image on Lambda behind API Gateway'
+  nat_gateways:
+    type: integer
+    default: 1
+    description: 'NAT gateways (0-2). 0 removes the biggest fixed cost but the app subnets lose outbound internet'
+  guardduty:
+    type: boolean
+    default: true
+    description: Create a GuardDuty detector (set false if the account already has one in this region)
+  cloudtrail:
+    type: boolean
+    default: true
+    description: Create a multi-region CloudTrail trail with its own bucket
+  bastion:
+    type: boolean
+    default: true
+    description: An SSM-only t4g.nano for migrations; stop it between sessions
+  deletion_protection:
+    type: boolean
+    default: true
+    description: 'Keep data stores when stacks are deleted; false lets a throwaway app tear down cleanly'
 source: AveHealth
 summary: 'The AWS foundation every aws-tier app deploys onto, in your own account: VPC, Aurora Serverless
   v2 Postgres, the API image on Lambda behind API Gateway, S3 + CloudFront, object storage, secrets and

@@ -21,6 +21,8 @@ This is the platform repo: modules, presets, schemas and the `platform` CLI. App
 - Copy `templates/module/` to `modules/<name>/`; fill every field in `module.yaml`; write the `CLAUDE.md` for the agent who comes after you: wiring, invariants, how to extend.
 - Prefer providing an existing interface over inventing one. New interfaces go in the catalog comment at the top of each `CLAUDE.md` that mentions them, and in `docs/CONTRACT.md`.
 - Do not add a module nobody has asked for. The module list exists because two apps needed each entry.
+- Infrastructure code lives in `infra/<name_with_underscores>/__init__.py` and exposes `build(ctx)`. A generated app's `infra/compose.py` (from `templates/app/infra/`) calls each selected module's `build` in dependency order. Inside it: `ctx.stack("Part")` for a tagged stack named `<App><Env><Part>`, `ctx.provide(iface, value)` for every interface in `provides` (the synth fails if one is missing), `ctx.require(iface)` / `ctx.optional(iface)` for what it consumes, `ctx.finally_(fn)` to fill a gap after every module has built. The CLAUDE.md lists exactly what each provided value exposes.
+- Infra tests synthesize a generated app (`platform new` into a temp folder) and assert on the templates; see `modules/infra-aws/tests/`. They need `pip install -r templates/app/infra/requirements.txt` and node.
 
 ## Extraction (from AveHealth, in this order)
 Code comes over from AveHealthRepo only through its comment stripper, and none of its notes come with it (to-do ids, decision ids, account numbers, document text): `docs/adr/0003-provenance.md`.

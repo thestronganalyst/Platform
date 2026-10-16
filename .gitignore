@@ -14,3 +14,4 @@ build/
 
 # generated apps never live in this repo
 /out/
+cdk.out/
