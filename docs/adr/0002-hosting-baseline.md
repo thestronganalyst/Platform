@@ -31,3 +31,6 @@ The owner answered four questions on 2026-10-16:
 
 ## Amendment (2026-10-16): a dedicated member account
 The owner's existing personal account still runs the earlier AveHealth stack (database, user pool, uploads with health data). Rather than share it, the platform deploys to a **separate member account named `platform`** under an AWS Organization whose management account is that personal account. Experiments never share an account, or its admin rights, with patient data, and retiring the old AveHealth resources later does not touch the platform. The deploy runs through the member account's `OrganizationAccountAccessRole`, assumed from a browser sign-in (`aws login --remote`), with no stored keys. Account numbers stay out of this repo.
+
+## Amendment (2026-10-16, later): the old AveHealth stack removed
+At the owner's request the earlier AveHealth stack is being shut down in the management account the same day, following AveHealth's own shutdown procedure: scheduled jobs disabled, a final database snapshot and the user list kept for 30 days (deleted automatically by EventBridge Scheduler), then every stack and retained resource removed in reverse order. Once done, the management account holds only the organization, the owner's sign-in and that temporary copy; workloads go in member accounts.
