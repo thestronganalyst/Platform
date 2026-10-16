@@ -1,0 +1,18 @@
+# Preset. Schema: ../schemas/preset.schema.json
+name: aws-app
+hosting: aws
+description: 'Any multi-role app on your AWS account: identity, people, orgs, consent, notifications and
+  storage, wired and deployable.'
+modules:
+- infra-aws
+- ci-cd
+- api-shell
+- web-shell
+- observability
+- identity
+- profiles
+- tenancy
+- consent-sharing
+- notifications
+- storage
+config: {}

@@ -1,0 +1,26 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: mobile-shell
+version: 0.1.0
+layer: capability
+status: planned
+drift: forked
+hosting:
+- aws
+platforms:
+- mobile
+provides:
+- mobile.shell@1
+requires:
+- identity.session@1
+- notify.send@1
+optional:
+- sync.store@1
+config:
+  bundle_id:
+    type: string
+    default: ''
+    description: iOS bundle id / Android application id
+source: AveHealth
+summary: 'The Expo app frame: auth, navigation, push registration. Forked on generate; domain screens
+  are added by the app.'

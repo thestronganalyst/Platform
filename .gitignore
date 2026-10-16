@@ -1,0 +1,16 @@
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+dist/
+build/
+
+# editors / os
+.DS_Store
+.idea/
+.vscode/
+
+# generated apps never live in this repo
+/out/

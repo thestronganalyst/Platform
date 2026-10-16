@@ -1,0 +1,30 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: ci-cd
+version: 0.1.0
+layer: foundation
+status: planned
+drift: platform-owned
+hosting:
+- aws
+- free
+platforms: []
+provides:
+- ci.pipeline@1
+requires: []
+optional:
+- infra.container@1
+- infra.static-host@1
+- infra.cdn@1
+config:
+  branch:
+    type: string
+    default: main
+    description: Branch that deploys to prod
+  preview_environments:
+    type: boolean
+    default: false
+    description: Deploy a preview per pull request
+source: AveHealth
+summary: GitHub Actions workflows that build, test and deploy every environment; adapts to whichever infra
+  interfaces are selected.

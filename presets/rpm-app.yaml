@@ -1,0 +1,15 @@
+# Preset. Schema: ../schemas/preset.schema.json
+name: rpm-app
+extends: aws-app
+hosting: aws
+description: 'AveHealth-shaped apps: aws-app plus a mobile shell and an analytics landing zone.'
+modules:
+- mobile-shell
+- analytics-landing
+config:
+  consent-sharing.categories:
+  - basic
+  - health
+  notifications.channels:
+  - email
+  - push

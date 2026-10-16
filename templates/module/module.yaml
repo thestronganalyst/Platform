@@ -1,0 +1,15 @@
+# Copy this folder to modules/<name>/ and fill every field. Schema: ../../schemas/module.schema.json
+name: my-module
+version: 0.1.0
+layer: capability          # foundation | capability | domain
+status: planned            # planned | incubating | stable
+drift: platform-owned      # platform-owned | forked
+hosting: [aws]             # aws | free
+platforms: [api]           # api | web | mobile (empty list for infra-only)
+provides:
+  - my.interface@1
+requires: []
+optional: []
+config: {}
+source: ""
+summary: One sentence saying what this module is.

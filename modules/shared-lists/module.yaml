@@ -1,0 +1,32 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: shared-lists
+version: 0.1.0
+layer: capability
+status: planned
+drift: platform-owned
+hosting:
+- aws
+- free
+platforms:
+- api
+- web
+- mobile
+provides:
+- lists.list@1
+- lists.item@1
+- lists.claim@1
+requires:
+- tenancy.scope@1
+- profiles.person@1
+- infra.db.postgres@1
+optional:
+- notify.send@1
+config:
+  allow_partial_claims:
+    type: boolean
+    default: true
+    description: An item with quantity 6 can be claimed 2 + 4
+source: softball
+incubates_in: softball
+summary: 'Lists with items and claims: who brings what, sign-up sheets, volunteer slots.'

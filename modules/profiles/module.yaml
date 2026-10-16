@@ -1,0 +1,32 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: profiles
+version: 0.1.0
+layer: capability
+status: planned
+drift: platform-owned
+hosting:
+- aws
+- free
+platforms:
+- api
+- web
+provides:
+- profiles.person@1
+- profiles.guardian@1
+requires:
+- identity.user@1
+- infra.db.postgres@1
+optional: []
+config:
+  managed:
+    type: boolean
+    default: true
+    description: Enable guardian-owned managed profiles
+  managed_age_threshold:
+    type: integer
+    default: 13
+    description: Under this age a person is a managed profile, never a login (COPPA)
+source: redesign for softball, back-port to AveHealth
+summary: People, separate from logins. A person may have zero logins (a kid, a dependent) or one; a guardian
+  owns managed profiles and acts for them.

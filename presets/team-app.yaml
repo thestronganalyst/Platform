@@ -1,0 +1,21 @@
+# Preset. Schema: ../schemas/preset.schema.json
+name: team-app
+extends: aws-app
+hosting: aws
+description: 'Softball and any team or league app: aws-app plus mobile, booking, payments, shared lists,
+  content and offline sync.'
+modules:
+- mobile-shell
+- booking
+- payments
+- shared-lists
+- content
+- offline-sync
+config:
+  profiles.managed: true
+  notifications.channels:
+  - email
+  - push
+  consent-sharing.categories:
+  - basic
+  - performance

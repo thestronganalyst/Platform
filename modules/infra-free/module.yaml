@@ -1,0 +1,24 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: infra-free
+version: 0.1.0
+layer: foundation
+status: planned
+drift: platform-owned
+hosting:
+- free
+platforms: []
+provides:
+- infra.db.postgres@1
+- infra.object-store@1
+- infra.static-host@1
+requires: []
+optional: []
+config:
+  supabase_project_ref:
+    type: string
+    default: ''
+    description: Supabase project reference; empty until the project exists
+source: project-tracker
+summary: 'The zero-cost foundation: Supabase for Postgres, auth and storage, GitHub Pages for the static
+  site. For small tools that do not justify an AWS account.'

@@ -1,0 +1,33 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: content
+version: 0.1.0
+layer: capability
+status: planned
+drift: forked
+hosting:
+- aws
+- free
+platforms:
+- web
+- mobile
+provides:
+- content.page@1
+- content.media@1
+requires:
+- storage.object@1
+- tenancy.scope@1
+- infra.db.postgres@1
+optional:
+- identity.roles@1
+config:
+  editor:
+    type: string
+    default: markdown
+    enum:
+    - markdown
+    - rich
+    description: Authoring format
+source: softball
+incubates_in: softball
+summary: 'Authored pages and media with role-scoped visibility: instruction, how-tos, fundraising pages.'

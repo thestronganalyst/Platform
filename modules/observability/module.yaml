@@ -1,0 +1,28 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: observability
+version: 0.1.0
+layer: foundation
+status: planned
+drift: platform-owned
+hosting:
+- aws
+platforms:
+- api
+- web
+provides:
+- obs.logs@1
+- obs.errors@1
+- obs.audit@1
+requires:
+- infra.container@1
+- infra.db.postgres@1
+optional: []
+config:
+  audit_retention_days:
+    type: integer
+    default: 365
+    description: How long audit events are kept
+source: AveHealth
+summary: Structured logs, error capture and an append-only audit stream. consent-sharing and anything
+  health- or money-adjacent writes to the audit stream.

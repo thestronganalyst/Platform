@@ -1,0 +1,31 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: storage
+version: 0.1.0
+layer: capability
+status: planned
+drift: platform-owned
+hosting:
+- aws
+- free
+platforms:
+- api
+- web
+provides:
+- storage.object@1
+requires:
+- infra.object-store@1
+- tenancy.scope@1
+optional:
+- infra.cdn@1
+config:
+  max_upload_mb:
+    type: integer
+    default: 25
+    description: Upload size limit
+  virus_scan:
+    type: boolean
+    default: false
+    description: Scan uploads before they are readable
+source: AveHealth
+summary: Uploads and signed downloads, keyed by tenant scope, with lifecycle rules.

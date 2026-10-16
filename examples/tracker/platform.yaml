@@ -1,0 +1,7 @@
+# A small free-tier tool, project-tracker shaped.
+app: tracker
+preset: free-app
+hosting: free
+config:
+  identity.providers: [email, google]
+environments: [prod]

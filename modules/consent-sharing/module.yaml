@@ -1,0 +1,40 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: consent-sharing
+version: 0.1.0
+layer: capability
+status: planned
+drift: platform-owned
+hosting:
+- aws
+platforms:
+- api
+- web
+provides:
+- consent.grant@1
+- consent.check@1
+- consent.revoke@1
+requires:
+- profiles.person@1
+- profiles.guardian@1
+- tenancy.scope@1
+- obs.audit@1
+- infra.db.postgres@1
+optional:
+- notify.send@1
+config:
+  categories:
+    type: array
+    default:
+    - basic
+    description: Data categories a grant can cover, e.g. [basic, health, performance]
+  default_posture:
+    type: string
+    default: deny
+    enum:
+    - deny
+    - allow-within-org
+    description: What is visible with no grant
+source: AveHealth
+summary: Who may see what about whom. A patient decides what a provider sees; a parent decides what a
+  coach and a league see about a kid. Every check is audited.

@@ -1,0 +1,25 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: analytics-landing
+version: 0.1.0
+layer: capability
+status: planned
+drift: platform-owned
+hosting:
+- aws
+platforms:
+- api
+provides:
+- analytics.emit@1
+requires:
+- infra.object-store@1
+optional:
+- tenancy.scope@1
+config:
+  landing_prefix:
+    type: string
+    default: landing/
+    description: Bucket prefix Databricks Auto Loader reads from
+source: AveHealth
+summary: Fire-and-forget events written as newline JSON to object storage for Databricks to pick up. Optional;
+  nothing depends on it.

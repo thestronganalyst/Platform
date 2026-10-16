@@ -1,0 +1,16 @@
+# AveHealth-shaped RPM app — first consumer; modules are extracted from it.
+app: avehealth
+preset: rpm-app
+hosting: aws
+modules:
+  remove: []
+  add: []
+config:
+  identity.providers: [email, apple]
+  identity.mfa: required
+  profiles.managed: true   # caregivers acting for a patient
+  tenancy.levels: [practice, panel]
+  consent-sharing.categories: [basic, health]
+  consent-sharing.default_posture: deny
+  notifications.channels: [email, push]
+environments: [dev, prod]

@@ -1,0 +1,39 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: identity
+version: 0.1.0
+layer: capability
+status: planned
+drift: platform-owned
+hosting:
+- aws
+- free
+platforms:
+- api
+- web
+- mobile
+provides:
+- identity.user@1
+- identity.session@1
+- identity.roles@1
+requires:
+- infra.db.postgres@1
+optional:
+- infra.secrets@1
+config:
+  providers:
+    type: array
+    default:
+    - email
+    description: 'Login providers: email, google, apple'
+  mfa:
+    type: string
+    default: optional
+    enum:
+    - 'off'
+    - optional
+    - required
+    description: MFA policy
+source: AveHealth
+summary: Login, sessions and roles. Cognito on the aws tier, Supabase Auth on the free tier, one interface
+  either way.

@@ -1,0 +1,37 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: booking
+version: 0.1.0
+layer: capability
+status: planned
+drift: platform-owned
+hosting:
+- aws
+platforms:
+- api
+- web
+provides:
+- booking.resource@1
+- booking.availability@1
+- booking.reservation@1
+- booking.approval@1
+requires:
+- tenancy.org@1
+- tenancy.scope@1
+- notify.send@1
+- infra.db.postgres@1
+optional:
+- payments.charge@1
+config:
+  approval_required:
+    type: boolean
+    default: true
+    description: Reservations wait for the resource owner's approval
+  hold_minutes:
+    type: integer
+    default: 15
+    description: How long an unconfirmed hold lasts
+source: softball
+incubates_in: softball
+summary: Resources, availability, holds, reservations and an optional owner approval step. Fields and
+  parks & rec now; provider appointment slots later.

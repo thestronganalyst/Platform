@@ -1,0 +1,67 @@
+# platform
+
+A personal platform-scaffolding repo: reusable **modules** (identity, profiles, tenancy, consent, notifications, infra, shells…), named **presets** that compose them, and a one-file **manifest** per app that says which to use. `platform new` turns a manifest into a deployable app on AWS (or the free tier).
+
+The modules are extracted from two real apps — AveHealth (an RPM provider/patient app) and a softball team/league app — and only what both need unchanged becomes a module. The contract that governs all of it is [`docs/CONTRACT.md`](docs/CONTRACT.md).
+
+## Status
+
+Skeleton. Every module folder exists, carries its contract (`module.yaml`, `CLAUDE.md`, `ADR.md`), and is `status: planned` — no implementation yet. `platform validate` passes for all three example manifests; `platform new` refuses to generate until modules are implemented. That refusal list is the extraction to-do list.
+
+## Layout
+
+```
+platform.yaml            ← (in each app) the manifest: preset + hosting + remove/add + config
+modules/<name>/          ← one folder per module
+  module.yaml            ← declaration: layer, status, drift, hosting, provides, requires, optional, config
+  CLAUDE.md              ← agent-facing contract: wiring, invariants, how to extend
+  ADR.md                 ← decisions and rejected alternatives (replaces "best X" branches)
+  infra/  app/  migrations/  tests/
+presets/<name>.yaml      ← named module compositions: aws-app, free-app, rpm-app, team-app
+schemas/                 ← JSON Schemas for module.yaml, presets and the manifest
+examples/<app>/          ← example manifests: avehealth (rpm-app), softball (team-app), tracker (free-app)
+templates/module/        ← copy this to start a new module
+docs/CONTRACT.md         ← the module contract and the module list; source of truth
+docs/adr/                ← platform-level decisions
+platform_cli/            ← the `platform` command
+```
+
+## Quickstart
+
+```bash
+pip install -e ".[dev]"
+
+platform list modules                               # every module, by layer
+platform list interfaces                            # every interface and who provides it
+platform validate examples/softball/platform.yaml   # the five rules, enforced
+platform plan     examples/softball/platform.yaml   # resolved modules + effective config
+platform new      examples/softball/platform.yaml ../softball   # refuses while modules are planned
+pytest
+```
+
+## The manifest
+
+```yaml
+app: softball
+preset: team-app          # aws-app | free-app | rpm-app | team-app
+hosting: aws              # aws | free
+modules:
+  remove: [content]       # drop a preset module — dependents fail loudly, never silently
+  add: []                 # add any module from modules/
+config:
+  profiles.managed: true  # <module>.<key>; keys are validated against each module's schema
+  tenancy.levels: [league, team]
+environments: [dev, prod]
+```
+
+## The five rules
+
+1. **Removable** — every `requires` is provided by a selected module, or validation names the gap.
+2. **Owns its data** — a module writes only its own tables; others go through interfaces.
+3. **Interfaces, not names** — dependencies are `domain.name@major` strings; the manifest picks the provider.
+4. **Layering is one-way** — domain → capability → foundation. `requires` may not point up; `optional` may.
+5. **Two-app rule** — a module is `stable` only once two apps use it unchanged.
+
+## Next
+
+Extraction order and the open ADRs are in `docs/CONTRACT.md`. Step 1 is `infra-aws` + `ci-cd`, proven by deploying an empty shell from a fresh clone.

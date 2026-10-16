@@ -1,0 +1,33 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: api-shell
+version: 0.1.0
+layer: foundation
+status: planned
+drift: platform-owned
+hosting:
+- aws
+platforms:
+- api
+provides:
+- api.router@1
+- api.auth-middleware@1
+- api.errors@1
+requires:
+- infra.db.postgres@1
+- infra.container@1
+optional:
+- identity.session@1
+- obs.logs@1
+config:
+  framework:
+    type: string
+    default: keep
+    enum:
+    - keep
+    - fastapi
+    - express
+    description: '`keep` = whatever AveHealth runs today (pending ADR)'
+source: AveHealth
+summary: 'The API process: routing, auth middleware, error envelope, health endpoint, DB connection, containerized
+  for infra.container.'

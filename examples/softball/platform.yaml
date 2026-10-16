@@ -1,0 +1,15 @@
+# Softball team/league app — second consumer of the platform.
+app: softball
+preset: team-app
+hosting: aws
+modules:
+  remove: [content]        # drop a preset module
+  add: []                  # add any module from modules/
+config:
+  identity.providers: [email, google, apple]
+  profiles.managed: true   # kids are guardian-owned profiles, never logins
+  tenancy.levels: [league, team]
+  notifications.channels: [email, push]
+  payments.connect_type: express   # pending ADR
+  offline-sync.conflict_policy: event-log
+environments: [dev, prod]

@@ -1,0 +1,32 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: tenancy
+version: 0.1.0
+layer: capability
+status: planned
+drift: platform-owned
+hosting:
+- aws
+- free
+platforms:
+- api
+- web
+provides:
+- tenancy.org@1
+- tenancy.hierarchy@1
+- tenancy.membership@1
+- tenancy.scope@1
+requires:
+- identity.user@1
+- profiles.person@1
+- infra.db.postgres@1
+optional: []
+config:
+  levels:
+    type: array
+    default:
+    - org
+    description: Named hierarchy levels, top first, e.g. [league, team] or [practice, panel]
+source: defined by softball
+summary: Organizations, their hierarchy, who belongs to them in what role, and the scope key every tenant-owned
+  row carries.

@@ -1,0 +1,34 @@
+# Module declaration. Schema: ../../schemas/module.schema.json
+# Interfaces are domain.name@major; depend on interfaces, never on module names.
+name: notifications
+version: 0.1.0
+layer: capability
+status: planned
+drift: platform-owned
+hosting:
+- aws
+- free
+platforms:
+- api
+provides:
+- notify.send@1
+- notify.templates@1
+- notify.preferences@1
+- notify.digest@1
+requires:
+- identity.user@1
+- infra.db.postgres@1
+optional:
+- infra.secrets@1
+config:
+  channels:
+    type: array
+    default:
+    - email
+    description: 'Enabled channels: email, push, sms'
+  digest_hour_local:
+    type: integer
+    default: 7
+    description: Local hour the daily digest sends
+source: AveHealth
+summary: Email, push and SMS behind one send call, with templates, per-user preferences and digesting.
