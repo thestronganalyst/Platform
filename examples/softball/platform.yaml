@@ -7,9 +7,11 @@ modules:
   add: []                  # add any module from modules/
 config:
   identity.providers: [email, google, apple]
-  profiles.managed: true   # kids are guardian-owned profiles, never logins
+  identity.signup: invite-only        # league director → coach → parent → kid
+  profiles.managed: true              # kids are guardian-owned profiles
+  profiles.managed_logins: true       # guardians may issue kids a read-only login
   tenancy.levels: [league, team]
   notifications.channels: [email, push]
-  payments.connect_type: express   # pending ADR
+  payments.connect_type: express     # pending ADR
   offline-sync.conflict_policy: event-log
-environments: [dev, prod]
+environments: [prod]

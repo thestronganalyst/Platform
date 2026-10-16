@@ -221,7 +221,7 @@ def resolve(manifest: dict, catalog: Catalog, report: Report) -> Resolution | No
     return Resolution(
         app=manifest["app"], hosting=manifest["hosting"], preset_chain=chain, modules=modules,
         removed=removed, added=added, config=config,
-        environments=list(manifest.get("environments") or ["dev", "prod"]),
+        environments=list(manifest.get("environments") or ["prod"]),  # docs/adr/0002: one environment by default
     )
 
 

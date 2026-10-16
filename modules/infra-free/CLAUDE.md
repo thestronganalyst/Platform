@@ -1,6 +1,6 @@
 # infra-free
 
-> The zero-cost foundation: Supabase for Postgres, auth and storage, GitHub Pages for the static site. For small tools that do not justify an AWS account.
+> The low-cost foundation: Supabase for Postgres, auth, storage and Edge Functions, GitHub Pages for the static site. Hosts small tools and multi-role apps alike.
 
 Layer: **foundation** · Status: **planned** · Drift: **platform-owned** · Hosting: free · Platforms: infra only
 
@@ -10,6 +10,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 - `infra.db.postgres@1` — a Postgres database plus a connection secret; migrations run against it
 - `infra.object-store@1` — a private object bucket with per-tenant key prefixes
 - `infra.static-host@1` — static site hosting (GitHub Pages)
+- `infra.functions@1` — server-side functions for privileged actions (Supabase Edge Functions on the free tier)
 
 ## Requires (hard)
 - none
@@ -26,7 +27,8 @@ This file is the agent-facing contract. Read it before touching anything in this
 
 ## Invariants (do not break; add a contract test if you touch one)
 - Row-level security is on for every table a module creates; a module that ships a table without an RLS policy fails validation on this tier.
-- No server-side runtime: anything that needs `api.router@1` cannot run on this tier.
+- No long-running server. Privileged work (invites, guardian-issued logins, payment webhooks) runs as Supabase Edge Functions through `infra.functions@1`; anything that needs `api.router@1` cannot run on this tier.
+- The service-role key lives only in Edge Function secrets, never in the static site.
 
 ## How to extend
 - A new interface on this tier must have an aws counterpart or be marked tier-specific in both `module.yaml` and `docs/CONTRACT.md`.

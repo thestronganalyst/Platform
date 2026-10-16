@@ -13,7 +13,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 - none
 
 ## Optional (used when present, never assumed)
-- `infra.container@1` — a place to run one container image with env and secret injection (App Runner or Fargate, per ADR)
+- `infra.container@1` — the API container image running on Lambda behind API Gateway, with env and secret injection
 - `infra.static-host@1` — static site hosting (GitHub Pages)
 - `infra.cdn@1` — a CDN distribution and bucket for static web assets
 
@@ -22,12 +22,13 @@ This file is the agent-facing contract. Read it before touching anything in this
 - `preview_environments` (boolean, default `false`) — Deploy a preview per pull request
 
 ## Wiring
-- Emits one workflow per environment in the manifest. With `infra.container@1` present it builds and pushes an image; with `infra.static-host@1` it publishes the static build.
-- Runs `platform validate` as the first job so a broken manifest never reaches a deploy step.
+- Emits one workflow per environment in the manifest. Runs `platform validate` and the tests first; a red check stops every deploy step.
+- Publishes the web app through GitHub OIDC (no stored AWS keys): new assets first, then the index, old assets cleared later, so a deploy never serves a blank page.
+- Backend stacks and migrations deploy by hand: the database has no internet route, so CI cannot reach it.
 
 ## Invariants (do not break; add a contract test if you touch one)
-- Prod deploys only from the configured branch and only after tests pass.
-- Secrets come from the platform's secret interface or GitHub environments, never from the repo.
+- Deploys only from the configured branch and only after every check passes.
+- Secrets come from OIDC roles or GitHub environments, never from the repo.
 
 ## How to extend
 - Add a job template under `app/ci/` and reference it from the workflow generator; never hand-edit a generated workflow in an app.

@@ -1,7 +1,7 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: api-shell
-version: 0.1.0
+version: 0.2.0
 layer: foundation
 status: planned
 drift: platform-owned
@@ -22,12 +22,10 @@ optional:
 config:
   framework:
     type: string
-    default: keep
+    default: fastapi
     enum:
-    - keep
     - fastapi
-    - express
-    description: '`keep` = whatever AveHealth runs today (pending ADR)'
+    description: Python 3.12, FastAPI, SQLAlchemy 2, Alembic, Pydantic 2; Mangum adapts it to Lambda
 source: AveHealth
-summary: 'The API process: routing, auth middleware, error envelope, health endpoint, DB connection, containerized
-  for infra.container.'
+summary: 'The API process: FastAPI with SQLAlchemy and Alembic on Python 3.12, run on Lambda through Mangum.
+  Routing, auth middleware, error envelope, health endpoint, database session.'

@@ -1,6 +1,6 @@
 # web-shell
 
-> The React PWA frame: layout, routing, role-aware navigation, theming, error boundary. Forked on generate because every app restyles it.
+> The React PWA frame (Vite, React 19, TypeScript, Tailwind 4, React Router, TanStack Query, Amplify Auth): layout, routing, role-aware navigation, theming, error boundary. Forked on generate because every app restyles it.
 
 Layer: **foundation** · Status: **planned** · Drift: **forked** · Hosting: aws, free · Platforms: web
 

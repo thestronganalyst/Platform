@@ -1,5 +1,5 @@
 <!-- Exported from the living doc: https://claude.ai/code/artifact/3cd34991-50e7-4d5a-a1e0-ae6ebf1aee2b
-     The doc is the editing surface; re-export here when it changes. Last export: 2026-10-16 (doc rev 13). -->
+     The doc is the editing surface; re-export here when it changes. Last export: 2026-10-16 (doc rev 26). -->
 
 # Platform Module Contract & Module List
 
@@ -67,14 +67,14 @@ Every app gets these. The only choice is the hosting tier, which swaps `infra-aw
 
 | Module | Provides | Requires | Source app | Drift | Status |
 | --- | --- | --- | --- | --- | --- |
-| `infra-aws` | `infra.network`, `infra.db.postgres`, `infra.container`, `infra.cdn`, `infra.secrets` | none | AveHealth | platform-owned | extract first |
-| `infra-free` | `infra.db.postgres` (Supabase), `infra.static-host` (GitHub Pages) | none | project-tracker | platform-owned | later |
+| `infra-aws` | `infra.network`, `infra.db.postgres`, `infra.container`, `infra.cdn`, `infra.secrets`, infra.object-store, infra.security-baseline | none | AveHealth | platform-owned | extract first |
+| `infra-free` | `infra.db.postgres` (Supabase), `infra.static-host` (GitHub Pages), infra.functions (Supabase Edge Functions) | none | project-tracker | platform-owned | later |
 | `ci-cd` | `ci.pipeline` (build, test, deploy per environment) | `infra.*` | AveHealth + project-tracker | platform-owned | extract first |
 | `api-shell` | `api.router`, `api.auth-middleware`, `api.errors` | `infra.db.postgres`, `infra.container`; optional `identity.session` | AveHealth | platform-owned | extract |
 | `web-shell` | `web.shell`, `web.route-registry`, `web.role-nav`, `web.theme` | optional `identity.session` | AveHealth | forked | extract |
 | `observability` | `obs.logs`, `obs.errors`, `obs.audit` | `infra.*` | AveHealth | platform-owned | extract |
 
-Open question: confirm the API framework and database AveHealth actually runs on today; the module boundaries above don't depend on the answer, but the extraction order does.
+AveHealth runs FastAPI on Lambda behind API Gateway, Aurora Serverless v2 Postgres and Cognito. The platform keeps all three; the reasons are in each module's ADR.md.
 
 ## Capability modules
 
@@ -83,12 +83,12 @@ Opt-in, generic, and the real payoff of the platform. The first four are the one
 | Module | Provides | Requires | Source | Drift | Status |
 | --- | --- | --- | --- | --- | --- |
 | `identity` | `identity.user`, `identity.session`, `identity.roles` (Cognito on `aws`, Supabase Auth on `free`) | `infra.*` | AveHealth | platform-owned | extract |
-| `profiles` | `profiles.person`, `profiles.guardian` (managed profiles: a person record that is not a login — kids under 13, dependents, caregivers' charges) | `identity.user` | redesign for softball, back-port to AveHealth | platform-owned | redesign |
+| `profiles` | `profiles.person`, `profiles.guardian` (managed profiles: kids, dependents and caregivers' charges, who may get a guardian-issued read-only login) | `identity.user` | redesign for softball, back-port to AveHealth | platform-owned | redesign |
 | `tenancy` | `tenancy.org`, `tenancy.hierarchy` (league → team; practice → panel), `tenancy.membership`, `tenancy.scope` | `identity.user`, `profiles.person` | defined by softball | platform-owned | redesign |
 | `consent-sharing` | `consent.grant`, `consent.check`, `consent.revoke` (who may see what about whom, scoped, audited) | `profiles.*`, `tenancy.scope`, `obs.audit` | AveHealth | platform-owned | extract |
 | `notifications` | `notify.send` (email, push, SMS), `notify.templates`, `notify.preferences`, `notify.digest` | `identity.user`, `infra.*` | AveHealth | platform-owned | extract |
 | `storage` | `storage.object` (upload, signed URLs, per-tenant prefixes) | `infra.*`, `tenancy.scope` | AveHealth | platform-owned | extract |
-| `mobile-shell` | `mobile.shell` (Expo app, auth, navigation, push registration) | `identity.session`, `notify.send` | AveHealth | forked | extract |
+| `mobile-shell` | `mobile.shell` (bare React Native app, auth, navigation, push registration) | `identity.session`, `notify.send` | AveHealth | forked | extract |
 | `analytics-landing` | `analytics.emit` (events → S3 / Databricks landing) | `infra.*` | AveHealth | platform-owned | optional |
 | `offline-sync` | `sync.store` (local store, queued writes, conflict policy) | `api.router` | softball | platform-owned | incubating |
 | `booking` | `booking.resource`, `booking.availability`, `booking.reservation`, `booking.approval` (fields now; provider appointments later) | `tenancy.*`, `notify.send` | softball | platform-owned | incubating |
@@ -120,7 +120,7 @@ A preset is a named list of modules plus default config. Four cover everything y
 | Preset | Builds on | Adds | Use it for |
 | --- | --- | --- | --- |
 | `aws-app` | — | `infra-aws`, `ci-cd`, `api-shell`, `web-shell`, `observability`, `identity`, `profiles`, `tenancy`, `consent-sharing`, `notifications`, `storage` | Any multi-role app on your AWS account |
-| `free-app` | — | `infra-free`, `ci-cd`, `web-shell`, `identity`, `profiles`, `notifications` (email only) | Small tools on GitHub Pages + Supabase, like project-tracker |
+| `free-app` | — | `infra-free`, `ci-cd`, `web-shell`, `identity`, `profiles`, `notifications` (email only) | Small tools on GitHub Pages + Supabase, and multi-role apps once tenancy and consent-sharing are added |
 | `rpm-app` | `aws-app` | `mobile-shell`, `analytics-landing` | AveHealth-shaped apps |
 | `team-app` | `aws-app` | `mobile-shell`, `booking`, `payments`, `shared-lists`, `content`, `offline-sync` | Softball and any team or league app |
 
@@ -139,11 +139,11 @@ modules:
   add: []               # add any stable module
 config:
   identity.providers: [email, google, apple]
-  profiles.managed: true          # kids are guardian-owned profiles, never logins
+  profiles.managed: true          # kids are guardian-owned profiles
   tenancy.levels: [league, team]
   notifications.channels: [email, push]
   payments.connect_type: express  # pending ADR
-environments: [dev, prod]
+environments: [prod]
 ```
 
 Validation runs before generation: every `requires` of every selected module must be provided by another selected module, every `config` key must exist in some module's schema, and every selected module must support the chosen `hosting` tier. Any failure names the module and the missing interface.
@@ -153,31 +153,36 @@ Validation runs before generation: every `requires` of every selected module mus
 Extract in dependency order, prove each step by deploying, and stop early. The point of stopping is to get softball generated from the preset as soon as the foundation holds; everything after that incubates inside softball.
 
 1. `infra-aws` + `ci-cd` — prove it by deploying an empty shell to your AWS account from a fresh clone.
-2. `identity`, then `profiles` (redesigned for managed profiles), then `tenancy` (designed against softball's league → team → player shape). Back-port all three into AveHealth before moving on; if AveHealth breaks, the boundaries are wrong.
+2. `identity`, then `profiles` (redesigned for managed profiles), then `tenancy` (designed against softball's league → team → player shape). Back-port all three into AveHealth before moving on; if AveHealth breaks, the boundaries are wrong. Each back-port changes sign-in or who sees what, so it needs your explicit yes first.
 3. `consent-sharing`, `notifications`, `storage`.
 4. `api-shell`, `web-shell`, `observability`.
 5. Stop. Write the `aws-app` and `team-app` presets, run `platform new`, and generate softball. `mobile-shell`, `booking`, `payments`, `shared-lists`, `offline-sync` and `content` are built inside softball as incubating modules and promoted only when a second app wants them.
 
 `infra-free` and the `free-app` preset come after softball ships, extracted from project-tracker.
 
-## Open decisions (ADRs to write)
+## Decisions
 
-Each of these ends as a dated entry in the owning module's `ADR.md`, with the alternatives rejected. None blocks step 1 of extraction; the first three block step 2.
+Each of these ends as a dated entry in the owning module's `ADR.md`, with the alternatives rejected. Eight were decided on 2026-10-16; nothing still open blocks extraction steps 1 to 4.
 
-| Decision | Owning module | Options on the table | Blocks |
+| Decision | Owning module | Outcome, or the options still on the table | Status |
 | --- | --- | --- | --- |
-| Identity provider per tier: one abstraction over Cognito and Supabase Auth, or pick one and drop the `free` tier for multi-role apps | `identity` | abstract both · Cognito only · Supabase Auth only | step 2 |
-| Managed-profile model: is a kid a profile with zero login, or a restricted login under a guardian? COPPA applies under 13 | `profiles` | profile-only · restricted login · both, by age | step 2 |
-| Tenancy depth: fixed levels per app (league → team) or arbitrary nesting | `tenancy` | fixed per app via config · arbitrary tree | step 2 |
-| API framework and ORM: keep whatever AveHealth runs, or standardize | `api-shell` | keep · standardize | step 4 |
-| Container runtime: App Runner vs ECS Fargate | `infra-aws` | App Runner (simpler) · Fargate (more control) | step 1 |
-| Offline conflict policy for scorekeeping | `offline-sync` | last-write-wins · append-only event log (likely) | softball |
-| Stripe Connect account type | `payments` | Express · Standard · Custom | softball |
-| Scaffolder: Copier vs a thin custom CLI reading `platform.yaml` directly | platform | Copier · custom · Copier wrapped by a CLI | step 5 |
+| Account, region, environments | `infra-aws` | Your own AWS account, us-east-1, one environment (`prod`) | Decided |
+| API runtime | `infra-aws` | The API image on Lambda behind API Gateway, as AveHealth runs it; App Runner and Fargate rejected (bill while idle) | Decided |
+| Database | `infra-aws` | Aurora Serverless v2 Postgres in isolated subnets; migrations by hand through an SSM bastion | Decided |
+| API framework | `api-shell` | FastAPI, SQLAlchemy 2, Alembic, Python 3.12 | Decided |
+| Identity per tier | `identity` | One interface over Cognito (aws) and Supabase Auth (free); the free tier hosts multi-role apps; invite-only by default | Decided |
+| Kids and logins | `profiles` | A kid is a managed profile; their guardian may issue a read-only login scoped to their teams. Counsel confirms the COPPA fit before kids under 13 use it | Decided |
+| Tenancy depth | `tenancy` | Fixed levels per app; a membership becomes active only on the member's or guardian's yes | Decided |
+| Mobile shell | `mobile-shell` | Bare React Native, as AveHealth runs it | Decided |
+| How a kid signs in | `profiles` | Passkey on a family device · guardian-generated code. Blocks softball | Open |
+| Passkeys on Supabase Auth | `identity` | Confirm support; until then passkey-only sign-in is aws-tier | Open |
+| Offline conflict policy | `offline-sync` | Append-only event log (likely) · last-write-wins. Blocks softball scorekeeping | Open |
+| Stripe Connect account type | `payments` | Express · Standard · Custom. Blocks softball payments | Open |
+| Scaffolder | platform | Copier wrapped by the CLI (leaning) · Copier · custom. Blocks step 5 | Open |
 
 ## Definition of v1 done
 
-v1 is done when `platform new --preset team-app --without content` on a fresh machine produces an app on your AWS account, deployed and reachable, with working login, a league → team → parent → managed-kid structure, and a test notification delivered, in under one hour of wall-clock time.
+v1 is done when `platform new examples/softball/platform.yaml` on a fresh machine produces an app on your AWS account, deployed and reachable, with working login, a league → team → parent → managed-kid structure, and a test notification delivered, in under one hour of wall-clock time.
 
 Time-box: two weekends for extraction steps 1 and 2. If step 2 isn't back-ported into AveHealth by then, stop, write down which boundary fought you, and redraw it before touching step 3. Missing the time-box is information, not failure; ignoring it is how these repos end up as a third thing to maintain instead of a tool that removes work.
 

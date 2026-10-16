@@ -24,7 +24,8 @@ This file is the agent-facing contract. Read it before touching anything in this
 - `digest_hour_local` (integer, default `7`) — Local hour the daily digest sends
 
 ## Wiring
-- Modules call `notify.send@1` with a template id and variables; they never talk to SES, SNS or a push provider directly.
+- Modules call `notify.send@1` with a template id and variables; they never talk to SES, a push service or an SMS provider directly.
+- Email goes through SES on aws; switch the sender domain only after its SPF, DKIM and DMARC records are in place, or a strict DMARC policy stops delivery outright. Push goes through Firebase Cloud Messaging for iOS and Android.
 - `mobile-shell` registers device tokens through `notify.preferences@1`.
 
 ## Invariants (do not break; add a contract test if you touch one)

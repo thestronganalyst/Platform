@@ -2,7 +2,7 @@
 
 > Structured logs, error capture and an append-only audit stream. consent-sharing and anything health- or money-adjacent writes to the audit stream.
 
-Layer: **foundation** · Status: **planned** · Drift: **platform-owned** · Hosting: aws · Platforms: api, web
+Layer: **foundation** · Status: **planned** · Drift: **platform-owned** · Hosting: aws, free · Platforms: api, web
 
 This file is the agent-facing contract. Read it before touching anything in this folder, and keep it true when you do.
 
@@ -12,18 +12,19 @@ This file is the agent-facing contract. Read it before touching anything in this
 - `obs.audit@1` — an append-only audit event stream other modules write to
 
 ## Requires (hard)
-- `infra.container@1` — a place to run one container image with env and secret injection (App Runner or Fargate, per ADR)
 - `infra.db.postgres@1` — a Postgres database plus a connection secret; migrations run against it
 
 ## Optional (used when present, never assumed)
-- none
+- `infra.container@1` — the API container image running on Lambda behind API Gateway, with env and secret injection
+- `infra.security-baseline@1` — CloudTrail, GuardDuty, VPC flow logs, KMS keys and an alarms topic
 
 ## Config (set in `platform.yaml` as `observability.<key>`)
 - `audit_retention_days` (integer, default `365`) — How long audit events are kept
 
 ## Wiring
-- Logs and errors go to the container runtime's log group; the audit stream is a table this module owns, written only through `obs.audit@1`.
-- `api-shell` attaches request and tenant ids to every log line when this module is selected.
+- On aws, logs and errors go to the Lambda log groups; on the free tier, to Supabase's logs.
+- The audit stream is a table this module owns, written only through `obs.audit@1`. On the free tier, RLS allows insert and never update or delete.
+- `api-shell` attaches request and tenant ids to every log line when this module is selected. Logs never carry email addresses.
 
 ## Invariants (do not break; add a contract test if you touch one)
 - Audit rows are never updated or deleted by application code; retention is a scheduled job, not a DELETE in a handler.

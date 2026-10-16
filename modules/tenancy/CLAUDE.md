@@ -29,6 +29,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 
 ## Invariants (do not break; add a contract test if you touch one)
 - No cross-scope query without an explicit, audited reason (for example a league director's roll-up).
+- An org can invite a person but never activate a membership for them: activation is the member's, or their guardian's, yes. Memberships move pending → active → ended.
 - Hierarchy depth is fixed per app by `levels`; arbitrary nesting is an ADR, not a config change.
 
 ## How to extend

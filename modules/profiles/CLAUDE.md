@@ -1,6 +1,6 @@
 # profiles
 
-> People, separate from logins. A person may have zero logins (a kid, a dependent) or one; a guardian owns managed profiles and acts for them.
+> People, separate from logins. A person may have zero logins or one; a guardian owns managed profiles (kids, dependents), acts for them, and may issue them a restricted login.
 
 Layer: **capability** · Status: **planned** · Drift: **platform-owned** · Hosting: aws, free · Platforms: api, web
 
@@ -8,7 +8,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 
 ## Provides
 - `profiles.person@1` — a person record that is independent of any login
-- `profiles.guardian@1` — guardian ownership of managed profiles (kids, dependents, charges)
+- `profiles.guardian@1` — guardian ownership of managed profiles: acting for them, and issuing or revoking their restricted login
 
 ## Requires (hard)
 - `identity.user@1` — a login principal with a stable id
@@ -19,14 +19,18 @@ This file is the agent-facing contract. Read it before touching anything in this
 
 ## Config (set in `platform.yaml` as `profiles.<key>`)
 - `managed` (boolean, default `true`) — Enable guardian-owned managed profiles
-- `managed_age_threshold` (integer, default `13`) — Under this age a person is a managed profile, never a login (COPPA)
+- `managed_age_threshold` (integer, default `13`) — Under this age COPPA's parental-consent rules apply
+- `managed_logins` (boolean, default `false`) — Guardians may issue a managed profile a restricted, read-only login
 
 ## Wiring
 - `identity.user@1` links to at most one `profiles.person@1`; a person may exist with no user.
-- `profiles.guardian@1` is the relationship `consent-sharing` and `tenancy.membership` consult when the acting user is not the person the data is about.
+- A guardian-issued login: the guardian creates it (no self sign-up, no email of the kid's own needed), it carries the restricted role, it reads only what the kid's memberships allow (in softball: schedule, games, scores), and the guardian can revoke it at any time.
+- `profiles.guardian@1` is what `consent-sharing` and `tenancy.membership` consult when the acting user is not the person the data is about.
 
 ## Invariants (do not break; add a contract test if you touch one)
-- A person under `managed_age_threshold` cannot be linked to a login; the API refuses, not just the UI.
+- A managed profile can be linked only to a guardian-issued restricted login; the API refuses any other login link, not just the UI.
+- A restricted login cannot message anyone, edit any profile, pay, or see another person's contact details.
+- Revoking a guardian-issued login ends its sessions at once.
 - Guardian links are many-to-many and dated; removing a guardian never deletes the person.
 
 ## How to extend

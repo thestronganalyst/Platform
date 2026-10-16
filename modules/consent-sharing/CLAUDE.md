@@ -2,7 +2,7 @@
 
 > Who may see what about whom. A patient decides what a provider sees; a parent decides what a coach and a league see about a kid. Every check is audited.
 
-Layer: **capability** · Status: **planned** · Drift: **platform-owned** · Hosting: aws · Platforms: api, web
+Layer: **capability** · Status: **planned** · Drift: **platform-owned** · Hosting: aws, free · Platforms: api, web
 
 This file is the agent-facing contract. Read it before touching anything in this folder, and keep it true when you do.
 
@@ -13,7 +13,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 
 ## Requires (hard)
 - `profiles.person@1` — a person record that is independent of any login
-- `profiles.guardian@1` — guardian ownership of managed profiles (kids, dependents, charges)
+- `profiles.guardian@1` — guardian ownership of managed profiles: acting for them, and issuing or revoking their restricted login
 - `tenancy.scope@1` — the scope key every tenant-owned row carries and every query filters on
 - `obs.audit@1` — an append-only audit event stream other modules write to
 - `infra.db.postgres@1` — a Postgres database plus a connection secret; migrations run against it
@@ -27,6 +27,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 
 ## Wiring
 - Any endpoint that returns data about a person other than the acting person calls `consent.check@1` first; the api-shell provides a decorator so this is one line.
+- `consent.check@1` is a Postgres function. On aws the API calls it; on the free tier row-level-security policies call it. One implementation, two callers.
 - Grants are made by the person or their guardian (`profiles.guardian@1`), scoped to a category and a `tenancy.scope@1`, and expire or are revoked.
 
 ## Invariants (do not break; add a contract test if you touch one)

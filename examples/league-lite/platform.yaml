@@ -1,0 +1,11 @@
+# A multi-role app on the free tier: orgs, guardians and consent without the AWS fixed costs.
+app: league-lite
+preset: free-app
+hosting: free
+modules:
+  add: [tenancy, consent-sharing, observability, storage]
+config:
+  identity.signup: invite-only
+  profiles.managed_logins: true
+  tenancy.levels: [league, team]
+environments: [prod]

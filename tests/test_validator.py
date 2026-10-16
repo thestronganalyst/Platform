@@ -91,6 +91,40 @@ def test_softball_resolves_team_app_minus_content():
     assert cfg["payments"]["connect_type"] == "express"
 
 
+def test_team_app_lets_guardians_issue_kid_logins():
+    manifest = {"app": "x", "preset": "team-app", "hosting": "aws"}
+    report, res = validate(manifest)
+    assert report.ok, report.render()
+    catalog, _ = load_catalog()
+    cfg = effective_config(res, catalog)
+    assert cfg["profiles"]["managed_logins"] is True
+    assert cfg["identity"]["signup"] == "invite-only"
+    assert res.environments == ["prod"]
+
+
+def test_free_tier_hosts_a_multi_role_app():
+    """docs: infra-free ADR 0002 — orgs, guardians, consent and audit on the free tier."""
+    manifest = yaml.safe_load((REPO / "examples/league-lite/platform.yaml").read_text())
+    report, res = validate(manifest)
+    assert report.ok, report.render()
+    for expected in ("tenancy", "consent-sharing", "observability", "storage", "profiles", "identity"):
+        assert expected in res.modules
+    assert "api-shell" not in res.modules
+
+
+def test_consent_sharing_on_free_tier_without_audit_names_the_gap():
+    manifest = {"app": "x", "preset": "free-app", "hosting": "free",
+                "modules": {"add": ["tenancy", "consent-sharing"]}}
+    report, _ = validate(manifest)
+    assert any("consent-sharing requires obs.audit@1" in e and "add one of: observability" in e for e in report.errors), report.render()
+
+
+def test_passkey_mfa_is_a_valid_identity_setting():
+    manifest = {"app": "x", "preset": "rpm-app", "hosting": "aws", "config": {"identity.mfa": "passkey"}}
+    report, _ = validate(manifest)
+    assert report.ok, report.render()
+
+
 # ---------------------------------------------------------------- rule 1: removable
 
 
@@ -200,7 +234,7 @@ def test_config_type_and_enum_are_checked():
                 "config": {"identity.mfa": "yes", "profiles.managed_age_threshold": "13"}}
     report, _ = validate(manifest)
     joined = "\n".join(report.errors)
-    assert "'yes' is not one of ['off', 'optional', 'required']" in joined
+    assert "'yes' is not one of ['off', 'optional', 'required', 'passkey']" in joined
     assert "expected integer, got str" in joined
 
 

@@ -1,7 +1,7 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: web-shell
-version: 0.1.0
+version: 0.2.0
 layer: foundation
 status: planned
 drift: forked
@@ -31,5 +31,6 @@ config:
     default: default
     description: Named theme token set
 source: AveHealth
-summary: 'The React PWA frame: layout, routing, role-aware navigation, theming, error boundary. Forked
-  on generate because every app restyles it.'
+summary: 'The React PWA frame (Vite, React 19, TypeScript, Tailwind 4, React Router, TanStack Query, Amplify
+  Auth): layout, routing, role-aware navigation, theming, error boundary. Forked on generate because every
+  app restyles it.'

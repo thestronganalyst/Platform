@@ -1,12 +1,13 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: observability
-version: 0.1.0
+version: 0.2.0
 layer: foundation
 status: planned
 drift: platform-owned
 hosting:
 - aws
+- free
 platforms:
 - api
 - web
@@ -15,9 +16,10 @@ provides:
 - obs.errors@1
 - obs.audit@1
 requires:
-- infra.container@1
 - infra.db.postgres@1
-optional: []
+optional:
+- infra.container@1
+- infra.security-baseline@1
 config:
   audit_retention_days:
     type: integer

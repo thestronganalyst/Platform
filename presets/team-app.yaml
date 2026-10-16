@@ -19,3 +19,4 @@ config:
   consent-sharing.categories:
   - basic
   - performance
+  profiles.managed_logins: true

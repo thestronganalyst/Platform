@@ -23,8 +23,12 @@ This is the platform repo: modules, presets, schemas and the `platform` CLI. App
 - Do not add a module nobody has asked for. The module list exists because two apps needed each entry.
 
 ## Extraction (from AveHealth, in this order)
-1. `infra-aws` + `ci-cd` — prove by deploying an empty shell from a fresh clone.
-2. `identity` → `profiles` (redesign: managed profiles) → `tenancy` (design against softball's league → team shape). Back-port all three into AveHealth before step 3; if AveHealth breaks, stop and redraw the boundary.
+Code comes over from AveHealthRepo only through its comment stripper, and none of its notes come with it (to-do ids, decision ids, account numbers, document text): `docs/adr/0003-provenance.md`.
+
+AveHealth's stacks map to modules like this: network, security, database, SPA hosting and CI role → `infra-aws` / `ci-cd`; auth → `identity`; uploads bucket → `storage` (its ingest Lambda is domain code and stays there); API → `api-shell`; monitoring → `observability`.
+
+1. `infra-aws` + `ci-cd` — prove by deploying an empty shell to the owner's account (us-east-1, one environment) from a fresh clone.
+2. `identity` → `profiles` (redesign: guardian-issued kid logins) → `tenancy` (design against softball's league → team shape). Back-port all three into AveHealth before step 3; if AveHealth breaks, stop and redraw the boundary. Each back-port changes sign-in or who sees what, so it needs the owner's explicit yes before it is built.
 3. `consent-sharing`, `notifications`, `storage`.
 4. `api-shell`, `web-shell`, `observability`.
 5. Stop. Generate softball from `team-app`. Everything else incubates inside softball.
@@ -37,5 +41,10 @@ When you implement a module, change `status` from `planned` to `incubating`, put
 - No picker UI before the modules are proven. The manifest is the picker.
 - Never hand-edit a generated app's `platform.lock.yaml` or its copied `module.yaml` files; change the manifest or the platform and regenerate.
 
-## Decisions still open (see `docs/CONTRACT.md` → Open decisions)
-Identity provider per tier · managed-profile model · tenancy depth · API framework · container runtime · offline conflict policy · Stripe Connect type · Copier vs custom scaffolder (`docs/adr/0001-scaffolder.md`).
+## Decisions
+Decided 2026-10-16 (each in the owning module's `ADR.md`; the baseline in `docs/adr/0002-hosting-baseline.md`): own AWS account, us-east-1, one environment · free tier hosts multi-role apps · identity abstracts Cognito and Supabase Auth, invite-only by default · kids get guardian-issued restricted logins · tenancy levels fixed per app · FastAPI on Lambda behind API Gateway · Aurora Serverless v2 · bare React Native.
+
+Still open: offline conflict policy (`offline-sync`) · Stripe Connect type (`payments`) · Copier vs custom scaffolder (`docs/adr/0001-scaffolder.md`) · how a kid signs in (`profiles`) · passkeys on Supabase Auth (`identity`).
+
+## Authorization pattern (both tiers)
+Who may see what is decided in Postgres: tenancy and consent checks are SQL functions. On AWS the API calls them; on the free tier row-level-security policies call them. Every route or policy that serves a person's data ships boundary tests in the same change: who must get in, and every party who must not, against a real Postgres.

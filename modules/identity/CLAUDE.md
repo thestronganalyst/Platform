@@ -1,6 +1,6 @@
 # identity
 
-> Login, sessions and roles. Cognito on the aws tier, Supabase Auth on the free tier, one interface either way.
+> Login, sessions and roles. Cognito on the aws tier, Supabase Auth on the free tier, one interface either way. Invite-only by default.
 
 Layer: **capability** · Status: **planned** · Drift: **platform-owned** · Hosting: aws, free · Platforms: api, web, mobile
 
@@ -19,16 +19,20 @@ This file is the agent-facing contract. Read it before touching anything in this
 
 ## Config (set in `platform.yaml` as `identity.<key>`)
 - `providers` (array, default `["email"]`) — Login providers: email, google, apple
-- `mfa` (string, default `"optional"`, one of ['off', 'optional', 'required']) — MFA policy
+- `mfa` (string, default `"optional"`, one of ['off', 'optional', 'required', 'passkey']) — Second factor: `passkey` means a passkey is the only one that counts (aws tier; free tier to be confirmed)
+- `signup` (string, default `"invite-only"`, one of ['invite-only', 'open']) — Invite-only: accounts are created on someone's behalf, never by self sign-up
 
 ## Wiring
 - Provides the principal that `api.auth-middleware@1` and `web.role-nav@1` consume. Neither shell requires this module; both gain behavior when it is present.
-- Roles are app-level (coach, provider). Org-level roles live in `tenancy.membership@1`, not here.
+- Invite-only: an account is created on someone's behalf (admin → member → their invitees) and the person receives a temporary credential. Every sign-in screen handles the forced new-password step that follows.
+- App-level roles are coarse (admin, member). What someone may do inside an org lives in `tenancy.membership@1`: one parent may coach another team.
+- On the free tier, creating a user needs the service-role key, so invites run in an Edge Function (`infra.functions@1`), never in the browser.
 
 ## Invariants (do not break; add a contract test if you touch one)
 - A user id is stable for the life of the account and never reused.
-- No person data lives here beyond what login needs; names, dates of birth and relationships belong to `profiles`.
-- Nobody under the managed-profile age threshold gets a login through this module (see `profiles`).
+- No person data lives here beyond what login needs; names, birth dates and relationships belong to `profiles`.
+- A managed profile gets a login only when its guardian issues one, and that login carries only the restricted role (see `profiles`).
+- Admin and service-role credentials never reach a client.
 
 ## How to extend
 - A new provider is a config enum value plus an adapter in `app/api/providers/`; the interface does not change.

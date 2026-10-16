@@ -21,6 +21,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 - `virus_scan` (boolean, default `false`) — Scan uploads before they are readable
 
 ## Wiring
+- Uploads go straight from the client to the bucket through a presigned PUT; the API never proxies file bytes.
 - Keys are `<scope_id>/<module>/<object_id>`; a module never builds a key by hand, it asks `storage.object@1`.
 - Downloads are signed URLs with short expiry; nothing in the bucket is public.
 

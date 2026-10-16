@@ -1,7 +1,7 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: profiles
-version: 0.1.0
+version: 0.2.0
 layer: capability
 status: planned
 drift: platform-owned
@@ -26,7 +26,11 @@ config:
   managed_age_threshold:
     type: integer
     default: 13
-    description: Under this age a person is a managed profile, never a login (COPPA)
+    description: Under this age COPPA's parental-consent rules apply
+  managed_logins:
+    type: boolean
+    default: false
+    description: Guardians may issue a managed profile a restricted, read-only login
 source: redesign for softball, back-port to AveHealth
-summary: People, separate from logins. A person may have zero logins (a kid, a dependent) or one; a guardian
-  owns managed profiles and acts for them.
+summary: People, separate from logins. A person may have zero logins or one; a guardian owns managed profiles
+  (kids, dependents), acts for them, and may issue them a restricted login.

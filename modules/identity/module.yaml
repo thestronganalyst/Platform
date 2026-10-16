@@ -1,7 +1,7 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: identity
-version: 0.1.0
+version: 0.2.0
 layer: capability
 status: planned
 drift: platform-owned
@@ -33,7 +33,16 @@ config:
     - 'off'
     - optional
     - required
-    description: MFA policy
+    - passkey
+    description: 'Second factor: `passkey` means a passkey is the only one that counts (aws tier; free
+      tier to be confirmed)'
+  signup:
+    type: string
+    default: invite-only
+    enum:
+    - invite-only
+    - open
+    description: 'Invite-only: accounts are created on someone''s behalf, never by self sign-up'
 source: AveHealth
 summary: Login, sessions and roles. Cognito on the aws tier, Supabase Auth on the free tier, one interface
-  either way.
+  either way. Invite-only by default.

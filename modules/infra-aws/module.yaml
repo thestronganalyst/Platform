@@ -1,7 +1,7 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: infra-aws
-version: 0.1.0
+version: 0.2.0
 layer: foundation
 status: planned
 drift: platform-owned
@@ -15,6 +15,7 @@ provides:
 - infra.cdn@1
 - infra.object-store@1
 - infra.secrets@1
+- infra.security-baseline@1
 requires: []
 optional: []
 config:
@@ -29,14 +30,14 @@ config:
     - small
     - medium
     - large
-    description: RDS instance class bucket; mapped to an instance type in the construct
+    description: Aurora Serverless v2 capacity range (min/max ACU), mapped in the construct
   runtime:
     type: string
-    default: app-runner
+    default: lambda
     enum:
-    - app-runner
-    - fargate
-    description: Container runtime for infra.container (pending ADR)
+    - lambda
+    description: 'API runtime: the API container image on Lambda behind API Gateway'
 source: AveHealth
-summary: 'The AWS foundation every aws-tier app deploys onto: network, Postgres, a container runtime,
-  CDN, object storage and secrets, as one CDK stack per environment.'
+summary: 'The AWS foundation every aws-tier app deploys onto, in your own account: VPC, Aurora Serverless
+  v2 Postgres, the API image on Lambda behind API Gateway, S3 + CloudFront, object storage, secrets and
+  a security baseline (CloudTrail, GuardDuty, flow logs, KMS keys, an alarms topic).'

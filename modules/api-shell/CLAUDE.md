@@ -1,6 +1,6 @@
 # api-shell
 
-> The API process: routing, auth middleware, error envelope, health endpoint, DB connection, containerized for infra.container.
+> The API process: FastAPI with SQLAlchemy and Alembic on Python 3.12, run on Lambda through Mangum. Routing, auth middleware, error envelope, health endpoint, database session.
 
 Layer: **foundation** · Status: **planned** · Drift: **platform-owned** · Hosting: aws · Platforms: api
 
@@ -13,28 +13,30 @@ This file is the agent-facing contract. Read it before touching anything in this
 
 ## Requires (hard)
 - `infra.db.postgres@1` — a Postgres database plus a connection secret; migrations run against it
-- `infra.container@1` — a place to run one container image with env and secret injection (App Runner or Fargate, per ADR)
+- `infra.container@1` — the API container image running on Lambda behind API Gateway, with env and secret injection
 
 ## Optional (used when present, never assumed)
 - `identity.session@1` — a verified session for a request or client
 - `obs.logs@1` — structured logs with request and tenant correlation
 
 ## Config (set in `platform.yaml` as `api-shell.<key>`)
-- `framework` (string, default `"keep"`, one of ['keep', 'fastapi', 'express']) — `keep` = whatever AveHealth runs today (pending ADR)
+- `framework` (string, default `"fastapi"`, one of ['fastapi']) — Python 3.12, FastAPI, SQLAlchemy 2, Alembic, Pydantic 2; Mangum adapts it to Lambda
 
 ## Wiring
 - Each selected module with an `app/api/` folder registers its routes through `api.router@1` at startup; the shell discovers them from the manifest, never from a hand-maintained list.
 - `api.auth-middleware@1` attaches a verified principal when `identity.session@1` is selected and an anonymous principal when it is not. Routes declare the minimum they need.
 
 ## Invariants (do not break; add a contract test if you touch one)
-- The shell owns no business tables; it may create nothing in `migrations/` except its own health check table if one is needed.
-- Every response error passes through `api.errors@1`; raw framework errors never reach a client.
+- The shell owns no business tables.
+- Every error passes through `api.errors@1`; raw framework errors never reach a client.
+- Authorization is enforced in SQL filters. Every route that returns or changes a person's data ships boundary tests in the same change: who must get in, and every party who must not, run against a real Postgres. In CI a skipped boundary test is a failure.
+- The image is checked before every deploy: it builds for the Lambda architecture, every module imports, and `/healthz` answers 200.
 
 ## How to extend
 - New cross-cutting middleware is added here only if two or more modules need it; otherwise it belongs in the module.
 
 ## Extraction notes
-Extraction step 4. Confirm the framework AveHealth uses first; the `framework` config exists so the decision is explicit, not accidental.
+Extraction step 4. Take AveHealth's app factory, settings, database session, auth middleware and error handling; leave every domain route behind.
 
 ## Rules that apply to every module
 1. Removable: deleting this module from a manifest leaves a buildable app; dependents fail loudly at `platform validate`, never silently at runtime.
