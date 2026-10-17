@@ -9,7 +9,7 @@ config:
   identity.providers: [email, google, apple]
   identity.signup: invite-only        # league director → coach → parent → kid
   profiles.managed: true              # kids are guardian-owned profiles
-  profiles.managed_logins: true       # guardians may issue kids a read-only login
+  profiles.kid_sign_in: [pairing_code, parent_device, own_email]   # guardians pick one per kid
   tenancy.levels: [league, team]
   notifications.channels: [email, push]
   payments.connect_type: express     # pending ADR

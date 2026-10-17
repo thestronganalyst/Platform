@@ -18,6 +18,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 
 ## Optional (used when present, never assumed)
 - `infra.secrets@1` — secret storage and injection into runtimes
+- `profiles.safeguarding@1` — when present, a message one person writes to others (a coach's announcement) is checked with `conversation_allowed` before it is sent
 
 ## Config (set in `platform.yaml` as `notifications.<key>`)
 - `channels` (array, default `["email"]`) — Enabled channels: email, push, sms
@@ -31,6 +32,7 @@ This file is the agent-facing contract. Read it before touching anything in this
 ## Invariants (do not break; add a contract test if you touch one)
 - A user can turn off every non-essential channel; essential messages (security, consent changes) are flagged as such in the template and cannot be muted.
 - Templates are versioned; a sent message records the template version used.
+- A person-written message never reaches a minor one-to-one; when a minor is among the recipients, their guardians receive it too.
 
 ## How to extend
 - A new channel is an adapter plus a config enum value; the send interface does not change.

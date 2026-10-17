@@ -279,8 +279,14 @@ def check(res: Resolution, catalog: Catalog, report: Report, *, strict: bool = F
         spec = schema[cfg_key]
         if not TYPE_CHECK[spec["type"]](value):
             report.error(f"config '{key}': expected {spec['type']}, got {type(value).__name__} ({value!r})")
+        elif spec.get("enum") is not None and spec["type"] == "array":
+            for item in value:
+                if item not in spec["enum"]:
+                    report.error(f"config '{key}': {item!r} is not one of {spec['enum']}")
         elif spec.get("enum") is not None and value not in spec["enum"]:
             report.error(f"config '{key}': {value!r} is not one of {spec['enum']}")
+        elif spec.get("minimum") is not None and value < spec["minimum"]:
+            report.error(f"config '{key}': {value!r} is below the minimum {spec['minimum']}")
 
     # status / drift
     planned = [n for n, m in selected.items() if m["status"] == "planned"]

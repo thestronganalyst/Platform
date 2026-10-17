@@ -47,7 +47,9 @@ When you implement a module, change `status` from `planned` to `incubating`, put
 ## Decisions
 Decided 2026-10-16 (each in the owning module's `ADR.md`; the baseline in `docs/adr/0002-hosting-baseline.md`): own AWS account, us-east-1, one environment · free tier hosts multi-role apps · identity abstracts Cognito and Supabase Auth, invite-only by default · kids get guardian-issued restricted logins · tenancy levels fixed per app · FastAPI on Lambda behind API Gateway · Aurora Serverless v2 · bare React Native.
 
-Still open: offline conflict policy (`offline-sync`) · Stripe Connect type (`payments`) · Copier vs custom scaffolder (`docs/adr/0001-scaffolder.md`) · how a kid signs in (`profiles`) · passkeys on Supabase Auth (`identity`).
+Decided 2026-10-17 (`profiles` ADR 0003, `tenancy` ADR 0004, `notifications` ADR 0003): under 18 only a guardian creates a kid's profile and login · no conversation that includes a minor is one-to-one; a kid's guardians are in every group the kid is in; kids read but don't post, to start · kid sign-in by pairing code, the guardian's phone, or a teen's own email · team staff must be cleared adults.
+
+Still open: offline conflict policy (`offline-sync`) · Stripe Connect type (`payments`) · Copier vs custom scaffolder (`docs/adr/0001-scaffolder.md`) · passkeys on Supabase Auth (`identity`).
 
 ## Authorization pattern (both tiers)
 Who may see what is decided in Postgres: tenancy and consent checks are SQL functions. On AWS the API calls them; on the free tier row-level-security policies call them. Every route or policy that serves a person's data ships boundary tests in the same change: who must get in, and every party who must not, against a real Postgres.

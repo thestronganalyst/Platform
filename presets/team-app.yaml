@@ -19,4 +19,8 @@ config:
   consent-sharing.categories:
   - basic
   - performance
-  profiles.managed_logins: true
+  profiles.kid_sign_in:
+  - pairing_code
+  - parent_device
+  - own_email
+  tenancy.staff_clearance: true

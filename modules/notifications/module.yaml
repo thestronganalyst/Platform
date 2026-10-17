@@ -1,7 +1,7 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: notifications
-version: 0.2.0
+version: 0.3.0
 layer: capability
 status: planned
 drift: platform-owned
@@ -20,6 +20,7 @@ requires:
 - infra.db.postgres@1
 optional:
 - infra.secrets@1
+- profiles.safeguarding@1
 config:
   channels:
     type: array

@@ -83,7 +83,7 @@ Opt-in, generic, and the real payoff of the platform. The first four are the one
 | Module | Provides | Requires | Source | Drift | Status |
 | --- | --- | --- | --- | --- | --- |
 | `identity` | `identity.user`, `identity.session`, `identity.roles` (Cognito on `aws`, Supabase Auth on `free`) | `infra.*` | AveHealth | platform-owned | incubating (aws tier, deployed in the shell) |
-| `profiles` | `profiles.person`, `profiles.guardian` (managed profiles: kids, dependents and caregivers' charges, who may get a guardian-issued read-only login) | `identity.user` | redesign for softball, back-port to AveHealth | platform-owned | redesign |
+| `profiles` | `profiles.person`, `profiles.guardian` (managed profiles: kids, dependents and caregivers' charges, who get a guardian-issued login), `profiles.safeguarding` (the rules for minors that every messaging module calls) | `identity.user` | redesign for softball, back-port to AveHealth | platform-owned | redesign |
 | `tenancy` | `tenancy.org`, `tenancy.hierarchy` (league → team; practice → panel), `tenancy.membership`, `tenancy.scope` | `identity.user`, `profiles.person` | defined by softball | platform-owned | redesign |
 | `consent-sharing` | `consent.grant`, `consent.check`, `consent.revoke` (who may see what about whom, scoped, audited) | `profiles.*`, `tenancy.scope`, `obs.audit` | AveHealth | platform-owned | extract |
 | `notifications` | `notify.send` (email, push, SMS), `notify.templates`, `notify.preferences`, `notify.digest` | `identity.user`, `infra.*` | AveHealth | platform-owned | extract |
@@ -162,7 +162,7 @@ Extract in dependency order, prove each step by deploying, and stop early. The p
 
 ## Decisions
 
-Each of these ends as a dated entry in the owning module's `ADR.md`, with the alternatives rejected. Eight were decided on 2026-10-16; nothing still open blocks extraction steps 1 to 4.
+Each of these ends as a dated entry in the owning module's `ADR.md`, with the alternatives rejected. Eight were decided on 2026-10-16 and the kids' rules on 2026-10-17; nothing still open blocks extraction steps 1 to 4.
 
 | Decision | Owning module | Outcome, or the options still on the table | Status |
 | --- | --- | --- | --- |
@@ -171,10 +171,10 @@ Each of these ends as a dated entry in the owning module's `ADR.md`, with the al
 | Database | `infra-aws` | Aurora Serverless v2 Postgres in isolated subnets; migrations by hand through an SSM bastion | Decided |
 | API framework | `api-shell` | FastAPI, SQLAlchemy 2, Alembic, Python 3.12 | Decided |
 | Identity per tier | `identity` | One interface over Cognito (aws) and Supabase Auth (free); the free tier hosts multi-role apps; invite-only by default | Decided |
-| Kids and logins | `profiles` | A kid is a managed profile; their guardian may issue a read-only login scoped to their teams. Counsel confirms the COPPA fit before kids under 13 use it | Decided |
+| Kids and logins | `profiles` | Under 18, only a guardian creates a kid's profile and login (set per app, never below 13). No conversation that includes a minor is one-to-one, and a kid's guardians are in every group the kid is in; kids read team conversations but don't post, to start. Team staff must be adults a league director has cleared. Counsel confirms the COPPA fit before kids under 13 use it | Decided |
 | Tenancy depth | `tenancy` | Fixed levels per app; a membership becomes active only on the member's or guardian's yes | Decided |
 | Mobile shell | `mobile-shell` | Bare React Native, as AveHealth runs it | Decided |
-| How a kid signs in | `profiles` | Passkey on a family device · guardian-generated code. Blocks softball | Open |
+| How a kid signs in | `profiles` | The guardian picks per kid: a one-time pairing code from the guardian's phone, the kid's view on the guardian's own phone, or a teen's own email (13 and up). Passkey later | Decided |
 | Passkeys on Supabase Auth | `identity` | Confirm support; until then passkey-only sign-in is aws-tier | Open |
 | Offline conflict policy | `offline-sync` | Append-only event log (likely) · last-write-wins. Blocks softball scorekeeping | Open |
 | Stripe Connect account type | `payments` | Express · Standard · Custom. Blocks softball payments | Open |

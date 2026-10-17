@@ -1,7 +1,7 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: profiles
-version: 0.2.0
+version: 0.3.0
 layer: capability
 status: planned
 drift: platform-owned
@@ -11,9 +11,11 @@ hosting:
 platforms:
 - api
 - web
+- mobile
 provides:
 - profiles.person@1
 - profiles.guardian@1
+- profiles.safeguarding@1
 requires:
 - identity.user@1
 - infra.db.postgres@1
@@ -22,15 +24,35 @@ config:
   managed:
     type: boolean
     default: true
-    description: Enable guardian-owned managed profiles
-  managed_age_threshold:
+    description: Enable guardian-owned managed profiles (kids, dependents, a caregiver's charge)
+  guardian_required_under:
+    type: integer
+    default: 18
+    minimum: 13
+    description: Below this age only a guardian can create the person's profile and issue their login.
+      Never below 13, where COPPA's parental-consent rules apply
+  kid_sign_in:
+    type: array
+    default: []
+    enum:
+    - pairing_code
+    - parent_device
+    - passkey
+    - own_email
+    description: 'Ways a guardian may let a kid sign in; empty means kids get no login. pairing_code
+      (a one-time code or QR from the guardian''s phone pairs the kid''s device), parent_device (kid
+      view on the guardian''s own phone, no kid login), own_email (a guardian-issued invite to a teen''s
+      own address). passkey is not built yet'
+  own_email_from_age:
     type: integer
     default: 13
-    description: Under this age COPPA's parental-consent rules apply
-  managed_logins:
+    minimum: 13
+    description: Youngest age at which a guardian may give a kid an own_email login
+  minors_post:
     type: boolean
     default: false
-    description: Guardians may issue a managed profile a restricted, read-only login
+    description: Minors may post in team conversations (their guardians are always in them). Off means
+      minors read only
 source: redesign for softball, back-port to AveHealth
 summary: People, separate from logins. A person may have zero logins or one; a guardian owns managed profiles
-  (kids, dependents), acts for them, and may issue them a restricted login.
+  (kids, dependents), acts for them, and issues their login. The safeguarding rules for minors live here.

@@ -89,7 +89,8 @@ def test_softball_resolves_team_app_minus_content():
     catalog, _ = load_catalog()
     cfg = effective_config(res, catalog)
     assert cfg["tenancy"]["levels"] == ["league", "team"]
-    assert cfg["profiles"]["managed_age_threshold"] == 13      # default, not overridden
+    assert cfg["profiles"]["guardian_required_under"] == 18    # default, not overridden
+    assert cfg["tenancy"]["staff_clearance"] is True
     assert cfg["payments"]["connect_type"] == "express"
 
 
@@ -99,7 +100,8 @@ def test_team_app_lets_guardians_issue_kid_logins():
     assert report.ok, report.render()
     catalog, _ = load_catalog()
     cfg = effective_config(res, catalog)
-    assert cfg["profiles"]["managed_logins"] is True
+    assert cfg["profiles"]["kid_sign_in"] == ["pairing_code", "parent_device", "own_email"]
+    assert cfg["profiles"]["minors_post"] is False
     assert cfg["identity"]["signup"] == "invite-only"
     assert res.environments == ["prod"]
 
@@ -233,11 +235,20 @@ def test_unknown_config_key_and_unselected_module_are_errors():
 
 def test_config_type_and_enum_are_checked():
     manifest = {"app": "x", "preset": "aws-app", "hosting": "aws",
-                "config": {"identity.mfa": "yes", "profiles.managed_age_threshold": "13"}}
+                "config": {"identity.mfa": "yes", "profiles.guardian_required_under": "13"}}
     report, _ = validate(manifest)
     joined = "\n".join(report.errors)
     assert "'yes' is not one of ['off', 'optional', 'required', 'passkey']" in joined
     assert "expected integer, got str" in joined
+
+
+def test_array_items_and_minimums_are_checked():
+    manifest = {"app": "x", "preset": "team-app", "hosting": "aws",
+                "config": {"profiles.kid_sign_in": ["pairing_code", "sms"], "profiles.guardian_required_under": 10}}
+    report, _ = validate(manifest)
+    joined = "\n".join(report.errors)
+    assert "'sms' is not one of" in joined
+    assert "10 is below the minimum 13" in joined
 
 
 def test_preset_config_is_overridden_by_manifest_config():

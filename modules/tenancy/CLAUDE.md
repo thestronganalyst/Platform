@@ -18,10 +18,11 @@ This file is the agent-facing contract. Read it before touching anything in this
 - `infra.db.postgres@1` — a Postgres database plus a connection secret; migrations run against it
 
 ## Optional (used when present, never assumed)
-- none
+- `profiles.safeguarding@1` — when present, a minor can never hold a staff role
 
 ## Config (set in `platform.yaml` as `tenancy.<key>`)
 - `levels` (array, default `["org"]`) — Named hierarchy levels, top first, e.g. [league, team] or [practice, panel]
+- `staff_clearance` (boolean, default `false`) — staff roles need a dated clearance (background check and safeguarding training, checked outside the app) recorded by the top-level org's director
 
 ## Wiring
 - Every module that stores tenant-owned data includes a `scope_id` column and filters on it; `tenancy.scope@1` is how a request resolves which scopes the acting person may touch.
@@ -31,6 +32,8 @@ This file is the agent-facing contract. Read it before touching anything in this
 - No cross-scope query without an explicit, audited reason (for example a league director's roll-up).
 - An org can invite a person but never activate a membership for them: activation is the member's, or their guardian's, yes. Memberships move pending → active → ended.
 - Hierarchy depth is fixed per app by `levels`; arbitrary nesting is an ADR, not a config change.
+- With `staff_clearance` on, a staff membership activates only for a person with a current clearance; a clearance records who set it, when, and when it expires, and an expired or withdrawn clearance ends staff rights at once.
+- A kid's membership in a team or league activates only on their guardian's yes, team by team.
 
 ## How to extend
 - A new level is a config change plus a migration; a new kind of relationship between orgs (affiliation, not parent/child) is a new interface.

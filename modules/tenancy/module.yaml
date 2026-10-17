@@ -1,7 +1,7 @@
 # Module declaration. Schema: ../../schemas/module.schema.json
 # Interfaces are domain.name@major; depend on interfaces, never on module names.
 name: tenancy
-version: 0.2.0
+version: 0.3.0
 layer: capability
 status: planned
 drift: platform-owned
@@ -20,13 +20,19 @@ requires:
 - identity.user@1
 - profiles.person@1
 - infra.db.postgres@1
-optional: []
+optional:
+- profiles.safeguarding@1
 config:
   levels:
     type: array
     default:
     - org
     description: Named hierarchy levels, top first, e.g. [league, team] or [practice, panel]
+  staff_clearance:
+    type: boolean
+    default: false
+    description: Staff roles (coach, team manager, volunteer with kids) need a dated clearance set by
+      the top-level org's director
 source: defined by softball
 summary: Organizations, their hierarchy, who belongs to them in what role, and the scope key every tenant-owned
   row carries.

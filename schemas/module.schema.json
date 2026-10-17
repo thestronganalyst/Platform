@@ -117,6 +117,9 @@
           "enum": {
             "type": "array",
             "minItems": 1
+          },
+          "minimum": {
+            "type": "integer"
           }
         }
       }
